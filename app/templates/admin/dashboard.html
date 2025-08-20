@@ -1,0 +1,63 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<div class="container">
+    <h1>Tổng quan hệ thống</h1>
+    
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-header">Tổng khách hàng</div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ total_customers }}</h5>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-header">Tổng đơn hàng</div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ total_orders }}</h5>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-white bg-info mb-3">
+                <div class="card-header">Doanh thu hôm nay</div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ "{:,.0f}".format(today_revenue) }} VND</h5>
+                    <p class="card-text">{{ today_order_count }} đơn hàng</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-header">Tổng doanh thu</div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ "{:,.0f}".format(total_revenue) }} VND</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    Thông tin hệ thống
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Quản lý nhà hàng & đơn hàng</h5>
+                    <p class="card-text">Đây là trang quản trị của hệ thống đặt đồ ăn. Bạn có thể quản lý người dùng, món ăn, nhà hàng và đơn hàng.</p>
+                    <a href="{{ url_for('user.index_view') }}" class="btn btn-primary">Quản lý người dùng</a>
+                    <a href="{{ url_for('food.index_view') }}" class="btn btn-success">Quản lý món ăn</a>
+                    <a href="{{ url_for('order.index_view') }}" class="btn btn-info">Quản lý đơn hàng</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
