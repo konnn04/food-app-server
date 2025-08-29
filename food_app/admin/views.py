@@ -2,12 +2,12 @@ from flask_admin.contrib.sqla import ModelView
 from flask_admin import BaseView, expose
 from flask import redirect, url_for, request, flash
 from flask_login import current_user, login_required
-from app import db
-from app.models.user import User
-from app.models.customer import Customer
-from app.models.food import Food
-from app.models.order import Order, OrderItem
-from app.models.restaurant import Restaurant
+from food_app import db
+from food_app.models.user import User
+from food_app.models.customer import Customer
+from food_app.models.food import Food
+from food_app.models.order import Order, OrderItem
+from food_app.models.restaurant import Restaurant
 
 class AdminRequiredMixin:
     def is_accessible(self):
@@ -19,8 +19,8 @@ class AdminRequiredMixin:
         return redirect(url_for('admin.login_view'))
 
 class UserModelView(AdminRequiredMixin, ModelView):
-    column_list = ('id', 'username', 'email', 'phone', 'full_name', 'role', 'is_active')
-    column_searchable_list = ('username', 'email', 'phone', 'full_name')
+    column_list = ('id', 'username', 'email', 'phone', 'first_name', 'last_name', 'role', 'is_active')
+    column_searchable_list = ('username', 'email', 'phone', 'first_name', 'last_name')
     column_filters = ('role', 'is_active')
     form_excluded_columns = ('password_hash', 'firebase_uid')
     
@@ -31,8 +31,8 @@ class UserModelView(AdminRequiredMixin, ModelView):
             model.set_password('password123')
 
 class CustomerModelView(AdminRequiredMixin, ModelView):
-    column_list = ('id', 'phone', 'full_name', 'email', 'loyalty_points', 'total_orders', 'is_active')
-    column_searchable_list = ('phone', 'full_name', 'email')
+    column_list = ('id', 'phone', 'first_name', 'last_name', 'email', 'loyalty_points', 'total_orders', 'is_active')
+    column_searchable_list = ('phone', 'first_name', 'last_name', 'email')
     column_filters = ('is_active',)
     form_excluded_columns = ('firebase_uid', 'otp_code', 'otp_expires_at', 'otp_attempts')
 
@@ -42,9 +42,9 @@ class RestaurantModelView(AdminRequiredMixin, ModelView):
     column_filters = ('is_active',)
 
 class FoodModelView(AdminRequiredMixin, ModelView):
-    column_list = ('id', 'name', 'price', 'category', 'available', 'restaurant.name')
-    column_searchable_list = ('name', 'category')
-    column_filters = ('available', 'category', 'restaurant.name')
+    column_list = ('id', 'name', 'price', 'categories', 'available', 'restaurant.name')
+    column_searchable_list = ('name', 'categories.name', 'restaurant.name')
+    column_filters = ('available', 'categories.name', 'restaurant.name')
 
 class OrderModelView(AdminRequiredMixin, ModelView):
     column_list = ('id', 'customer.full_name', 'restaurant.name', 'total_amount', 'status', 'created_at')

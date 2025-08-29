@@ -1,13 +1,15 @@
-from app import db
+from food_app import db
 from datetime import datetime
 
 class BaseUser(db.Model):
     __tablename__ = 'base_users'
     
     id = db.Column(db.Integer, primary_key=True)
-    phone = db.Column(db.String(20), unique=True, nullable=False)
-    full_name = db.Column(db.String(100), nullable=True)
-    gender = db.Column(db.String(10), nullable=True)  # male, female, other
+    first_name = db.Column(db.String(50), nullable=False)
+    last_name = db.Column(db.String(50), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=True)
+    phone = db.Column(db.String(20), unique=True, nullable=True)
+    gender = db.Column(db.String(10), nullable=False, default='male') 
     date_of_birth = db.Column(db.Date, nullable=True)
     address = db.Column(db.Text, nullable=True)
     is_active = db.Column(db.Boolean, default=True)
@@ -26,8 +28,10 @@ class BaseUser(db.Model):
         return {
             'id': self.id,
             'phone': self.phone,
-            'full_name': self.full_name,
-            'gender': self.gender,
+            'full_name': self.first_name + ' ' + self.last_name,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'gender': self.gender, 
             'date_of_birth': self.date_of_birth.isoformat() if self.date_of_birth else None,
             'address': self.address,
             'is_active': self.is_active,

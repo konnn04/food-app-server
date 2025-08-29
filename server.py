@@ -1,5 +1,5 @@
 import os
-from app import create_app
+from food_app import create_app
 
 app = create_app(os.getenv('FLASK_ENV', 'development'))
 

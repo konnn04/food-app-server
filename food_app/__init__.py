@@ -15,15 +15,15 @@ def create_app(config_name='default'):
     
     # Khởi tạo extensions
     db.init_app(app)
-    CORS(app)
+    CORS(app, origins=["http://localhost:3000"], supports_credentials=True)
     jwt.init_app(app)
     flask_admin.init_app(app)
     
     # Đăng ký blueprints
-    from app.routes.auth import auth_bp
-    from app.routes.food import food_bp
-    from app.routes.order import order_bp
-    from app.routes.admin_api import admin_api_bp
+    from food_app.routes.auth import auth_bp
+    from food_app.routes.food import food_bp
+    from food_app.routes.order import order_bp
+    from food_app.routes.admin_api import admin_api_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(food_bp, url_prefix='/api/food')
@@ -35,7 +35,7 @@ def create_app(config_name='default'):
         db.create_all()
         
         # Khởi tạo admin views
-        from app.admin.views import init_admin_views
+        from food_app.admin.views import init_admin_views
         init_admin_views(flask_admin)
     
     return app

@@ -1,4 +1,4 @@
-from app import db
+from food_app import db
 from datetime import datetime
 
 class Order(db.Model):
@@ -8,7 +8,7 @@ class Order(db.Model):
     customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=False)
     restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurants.id'), nullable=False)
     total_amount = db.Column(db.Float, nullable=False)
-    status = db.Column(db.String(20), default='pending')  # pending, confirmed, preparing, ready, delivering, delivered, cancelled
+    status = db.Column(db.String(20), default='pending')
     delivery_address = db.Column(db.Text)
     delivery_phone = db.Column(db.String(20))
     notes = db.Column(db.Text)
@@ -18,14 +18,15 @@ class Order(db.Model):
     
     # Relationships
     order_items = db.relationship('OrderItem', backref='order', lazy=True, cascade='all, delete-orphan')
-    restaurant = db.relationship('Restaurant', backref='orders')
+    restaurant = db.relationship('Restaurant', back_populates='orders')
+    customer = db.relationship('Customer', back_populates='orders')
     
     def to_dict(self):
         return {
             'id': self.id,
             'customer_id': self.customer_id,
-            'customer_name': self.customer.full_name if self.customer else None,
-            'customer_phone': self.customer.phone if self.customer else None,
+            'customer_name': self.customer.full_name if self.customer else None,  # SỬA
+            'customer_phone': self.customer.phone if self.customer else None,     # SỬA
             'restaurant_id': self.restaurant_id,
             'restaurant_name': self.restaurant.name if self.restaurant else None,
             'total_amount': self.total_amount,
@@ -50,7 +51,7 @@ class OrderItem(db.Model):
     price = db.Column(db.Float, nullable=False)
     
     # Relationship
-    food = db.relationship('Food', backref='order_items')
+    food = db.relationship('Food', backref='food_order_items')
     
     def to_dict(self):
         return {

@@ -1,4 +1,4 @@
-from app import db
+from food_app import db
 from datetime import datetime
 
 class Restaurant(db.Model):
@@ -12,12 +12,17 @@ class Restaurant(db.Model):
     description = db.Column(db.Text)
     image_url = db.Column(db.String(200))
     is_active = db.Column(db.Boolean, default=True)
-    opening_hours = db.Column(db.JSON)  # {"mon": "8:00-22:00", "tue": "8:00-22:00", ...}
+    opening_hours = db.Column(db.JSON)  
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relationships - remove the backref since it's defined in Food model
-    # foods relationship will be created automatically by the backref in Food model
+    owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
+    # Relationships
+    owner = db.relationship('User', foreign_keys=[owner_id], backref='owned_restaurants')
+    users = db.relationship('User', foreign_keys='User.restaurant_id', back_populates='restaurant')
+    foods = db.relationship('Food', back_populates='restaurant', lazy=True)
+    orders = db.relationship('Order', back_populates='restaurant', lazy=True)
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -29,5 +34,7 @@ class Restaurant(db.Model):
             'image_url': self.image_url,
             'is_active': self.is_active,
             'opening_hours': self.opening_hours,
+            'owner_id': self.owner_id,
+            'owner_name': self.owner.full_name if self.owner else None,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }

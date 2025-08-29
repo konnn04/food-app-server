@@ -1,10 +1,10 @@
 from functools import wraps
 from flask import request
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
-from app.models.user import User
-from app.models.customer import Customer
-from app.utils.responses import error_response
-from app.utils.jwt_service import get_user_id_from_jwt, get_user_type_from_jwt, get_role_from_jwt
+from food_app.models.user import User
+from food_app.models.customer import Customer
+from food_app.utils.responses import error_response
+from food_app.utils.jwt_service import get_user_id_from_jwt, get_user_type_from_jwt, get_role_from_jwt
 
 def jwt_customer_required(f):
     """Decorator yêu cầu JWT của customer"""

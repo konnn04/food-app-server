@@ -1,0 +1,15 @@
+name: Bug report
+description: Báo cáo lỗi khi sử dụng hệ thống
+title: "[BUG] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Cảm ơn bạn đã báo lỗi!"
+  - type: input
+    id: os
+    attributes:
+      label: Hệ điều hành
+      placeholder: "VD: Windows 10, Ubuntu 20.04"
+    validations:
+      required: true
