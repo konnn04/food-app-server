@@ -7,5 +7,6 @@ from .restaurant import Restaurant
 from .category import Category
 from .otp import OTP
 from .food_categories import food_categories
+from .invitation import Invitation  # Thêm mới
 
-__all__ = ['BaseUser', 'Customer', 'User', 'Food', 'Order', 'OrderItem', 'Restaurant', 'Category', 'OTP', 'food_categories']
+__all__ = ['BaseUser', 'Customer', 'User', 'Food', 'Order', 'OrderItem', 'Restaurant', 'Category', 'OTP', 'food_categories', 'Invitation']

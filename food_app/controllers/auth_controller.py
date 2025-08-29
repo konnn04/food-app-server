@@ -1,6 +1,7 @@
 from food_app.dao import UserDAO, CustomerDAO, OTPDAO
 from food_app.utils.jwt_service import generate_tokens
 from food_app.utils.sms import send_otp_sms
+from werkzeug.security import generate_password_hash
 from food_app.utils.validators import validate_phone, validate_password, validate_email
 from food_app.utils.responses import success_response, error_response
 from datetime import datetime
@@ -44,57 +45,7 @@ class AuthController:
         except Exception as e:
             return error_response(f'Lỗi server: {str(e)}', 500)
 
-    @staticmethod
-    def create_staff(data, current_user):
-        """Tạo tài khoản staff (chỉ manager+ mới được tạo)"""
-        try:
-            # Validation
-            required_fields = ['username', 'password', 'phone', 'first_name', 'last_name', 'role']
-            for field in required_fields:
-                if not data.get(field):
-                    return error_response(f'Thiếu thông tin: {field}', 400)
-
-            if data['role'] not in ['staff', 'manager']:
-                return error_response('Vai trò không hợp lệ', 400)
-
-            if not validate_password(data['password']):
-                return error_response('Mật khẩu phải có ít nhất 6 ký tự', 400)
-
-            if not validate_phone(data['phone']):
-                return error_response('Số điện thoại không hợp lệ', 400)
-
-            # Kiểm tra tồn tại
-            if UserDAO.get_user_by_username(data['username']):
-                return error_response('Tên đăng nhập đã tồn tại', 400)
-
-            if UserDAO.get_user_by_phone(data['phone']):
-                return error_response('Số điện thoại đã được sử dụng', 400)
-
-            if data.get('email') and UserDAO.get_user_by_email(data['email']):
-                return error_response('Email đã được sử dụng', 400)
-
-            # Tạo user data
-            user_data = {
-                'username': data['username'],
-                'phone': data['phone'],
-                'email': data.get('email'),
-                'first_name': data['first_name'],
-                'last_name': data['last_name'],
-                'role': data['role'],
-                'restaurant_id': data.get('restaurant_id'),
-                'gender': data.get('gender', 'male'),
-                'address': data.get('address'),
-                'user_type': 'staff'
-            }
-
-            user = UserDAO.create_user(user_data)
-            user.set_password(data['password'])
-
-            return success_response('Tạo tài khoản thành công', user.to_dict(), 201)
-
-        except Exception as e:
-            return error_response(f'Lỗi server: {str(e)}', 500)
-
+   
     @staticmethod
     def get_profile(user):
         """Lấy thông tin profile"""
@@ -231,3 +182,103 @@ class AuthController:
 
         except Exception as e:
             return error_response(f'Lỗi server: {str(e)}', 500)
+
+    @staticmethod
+    def create_owner(data):
+        """Tạo tài khoản owner mới (không tạo restaurant ngay)"""
+        try:
+            required_fields = ['first_name', 'last_name', 'phone', 'email', 'address', 'password', 'username', 'gender']
+            for field in required_fields:
+                if not data.get(field):
+                    return error_response(f'Thiếu thông tin bắt buộc: {field}', 400)
+
+            if not validate_phone(data['phone']):
+                return error_response('Số điện thoại không hợp lệ', 400)
+
+            if not validate_email(data['email']):
+                return error_response('Email không hợp lệ', 400)
+
+            # Kiểm tra tồn tại
+            if UserDAO.get_user_by_username(data['username']):
+                return error_response('Tên đăng nhập đã tồn tại', 400)
+
+            if UserDAO.get_user_by_phone(data['phone']):
+                return error_response('Số điện thoại đã được sử dụng', 400)
+
+            if UserDAO.get_user_by_email(data['email']):
+                return error_response('Email đã được sử dụng', 400)
+
+            password_hash = generate_password_hash(data['password'])
+            user_data = {
+                'username': data['username'],
+                'phone': data['phone'],
+                'email': data['email'],
+                'first_name': data['first_name'],
+                'last_name': data['last_name'],
+                'role': 'owner', 
+                'gender': data['gender'],
+                'address': data['address'],
+                'password_hash': password_hash
+            }
+
+            user = UserDAO.create_user(user_data)
+
+            response_data = user.to_dict()
+            response_data['next_step'] = 'create_restaurant'  # Hướng dẫn bước tiếp theo
+
+            return success_response('Tạo tài khoản owner thành công. Vui lòng tạo nhà hàng của bạn.', response_data, 201)
+
+        except Exception as e:
+            return error_response(f'Lỗi server: {str(e)}', 500)
+        
+    # @staticmethod
+    # def create_staff(data):
+    #     """Tạo tài khoản staff (chỉ manager+ mới được tạo)"""
+    #     try:
+    #         # Validation
+    #         required_fields = ['username', 'password', 'phone', 'first_name', 'last_name', 'role']
+    #         for field in required_fields:
+    #             if not data.get(field):
+    #                 return error_response(f'Thiếu thông tin: {field}', 400)
+
+    #         if data['role'] not in ['staff', 'manager']:
+    #             return error_response('Vai trò không hợp lệ', 400)
+
+    #         if not validate_password(data['password']):
+    #             return error_response('Mật khẩu phải có ít nhất 6 ký tự', 400)
+
+    #         if not validate_phone(data['phone']):
+    #             return error_response('Số điện thoại không hợp lệ', 400)
+
+    #         # Kiểm tra tồn tại
+    #         if UserDAO.get_user_by_username(data['username']):
+    #             return error_response('Tên đăng nhập đã tồn tại', 400)
+
+    #         if UserDAO.get_user_by_phone(data['phone']):
+    #             return error_response('Số điện thoại đã được sử dụng', 400)
+
+    #         if data.get('email') and UserDAO.get_user_by_email(data['email']):
+    #             return error_response('Email đã được sử dụng', 400)
+
+    #         # Tạo user data
+    #         user_data = {
+    #             'username': data['username'],
+    #             'phone': data['phone'],
+    #             'email': data.get('email'),
+    #             'first_name': data['first_name'],
+    #             'last_name': data['last_name'],
+    #             'role': data['role'],
+    #             'restaurant_id': data.get('restaurant_id'),
+    #             'gender': data.get('gender', 'male'),
+    #             'address': data.get('address'),
+    #             'user_type': 'staff'
+    #         }
+
+    #         user = UserDAO.create_user(user_data)
+    #         user.set_password(data['password'])
+
+    #         return success_response('Tạo tài khoản thành công', user.to_dict(), 201)
+
+    #     except Exception as e:
+    #         return error_response(f'Lỗi server: {str(e)}', 500)
+

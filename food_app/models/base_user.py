@@ -1,5 +1,6 @@
 from food_app import db
 from datetime import datetime
+import random
 
 class BaseUser(db.Model):
     __tablename__ = 'base_users'
@@ -8,6 +9,7 @@ class BaseUser(db.Model):
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=True)
+    avatar = db.Column(db.String(255), nullable=True, default=f'https://api.dicebear.com/7.x/micah/png?seed={random.randint(1, 1000)}')
     phone = db.Column(db.String(20), unique=True, nullable=True)
     gender = db.Column(db.String(10), nullable=False, default='male') 
     date_of_birth = db.Column(db.Date, nullable=True)
@@ -31,6 +33,7 @@ class BaseUser(db.Model):
             'full_name': self.first_name + ' ' + self.last_name,
             'first_name': self.first_name,
             'last_name': self.last_name,
+            'avatar': self.avatar,
             'gender': self.gender, 
             'date_of_birth': self.date_of_birth.isoformat() if self.date_of_birth else None,
             'address': self.address,

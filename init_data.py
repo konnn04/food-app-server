@@ -26,6 +26,7 @@ def init_sample_data():
                 gender='male',
                 role='owner',  # Role mới
                 user_type='staff'
+                # KHÔNG gán restaurant_id cho owner
             )
             owner.set_password('owner123')
             db.session.add(owner)
@@ -34,8 +35,8 @@ def init_sample_data():
         else:
             owner = User.query.filter_by(username='restaurant_owner').first()
 
-        # 2. Tạo nhà hàng với owner_id
-        if Restaurant.query.count() == 0:
+        # 2. Tạo nhà hàng cho owner (duy nhất 1)
+        if not owner.owned_restaurant:
             restaurant = Restaurant(
                 name='Quán Cơm Tấm Sài Gòn',
                 address='123 Nguyễn Văn Cừ, Q.5, TP.HCM',
@@ -43,6 +44,8 @@ def init_sample_data():
                 email='contact@comtam.com',
                 description='Quán cơm tấm truyền thống Sài Gòn',
                 owner_id=owner.id,  # Gán owner
+                tax_code='1234567890',  # Bổ sung mã số thuế
+                approval_status='approved',  # Đã phê duyệt
                 opening_hours={
                     'mon': '6:00-22:00',
                     'tue': '6:00-22:00',
@@ -55,9 +58,9 @@ def init_sample_data():
             )
             db.session.add(restaurant)
             db.session.commit()
-            print("✓ Đã tạo nhà hàng với owner")
+            print("✓ Đã tạo nhà hàng cho owner")
         else:
-            restaurant = Restaurant.query.first()
+            restaurant = owner.owned_restaurant
 
         # 3. Tạo admin (không cần restaurant_id)
         if User.query.filter_by(username='admin').first() is None:
@@ -70,12 +73,13 @@ def init_sample_data():
                 gender='male',
                 role='admin',
                 user_type='staff'
+                # Admin không thuộc restaurant nào
             )
             admin.set_password('admin123')
             db.session.add(admin)
             print("✓ Đã tạo tài khoản admin")
 
-        # 4. Tạo manager (thuộc về restaurant)
+        # 4. Tạo manager và gán vào restaurant qua invitation
         if User.query.filter_by(username='manager').first() is None:
             manager = User(
                 first_name='Nguyễn Văn',
@@ -85,14 +89,14 @@ def init_sample_data():
                 email='manager@restaurant.com',
                 gender='male',
                 role='manager',
-                restaurant_id=restaurant.id,
+                restaurant_id=restaurant.id,  # Gán trực tiếp cho demo
                 user_type='staff'
             )
             manager.set_password('manager123')
             db.session.add(manager)
             print("✓ Đã tạo tài khoản manager")
 
-        # 5. Tạo staff (thuộc về restaurant)
+        # 5. Tạo staff và gán vào restaurant qua invitation
         if User.query.filter_by(username='staff').first() is None:
             staff = User(
                 first_name='Trần Thị',
@@ -102,7 +106,7 @@ def init_sample_data():
                 email='staff@restaurant.com',
                 gender='female',
                 role='staff',
-                restaurant_id=restaurant.id,
+                restaurant_id=restaurant.id,  # Gán trực tiếp cho demo
                 user_type='staff'
             )
             staff.set_password('staff123')

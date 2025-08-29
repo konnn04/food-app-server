@@ -15,11 +15,17 @@ class Restaurant(db.Model):
     opening_hours = db.Column(db.JSON)  
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    # Mối quan hệ 1-1 với owner
+    owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)  
+    
+    tax_code = db.Column(db.String(20), unique=True, nullable=True)  
+    approval_status = db.Column(db.String(20), default='pending')  
+    approval_date = db.Column(db.DateTime, nullable=True)
+    rejection_reason = db.Column(db.Text, nullable=True)
     
     # Relationships
-    owner = db.relationship('User', foreign_keys=[owner_id], backref='owned_restaurants')
-    users = db.relationship('User', foreign_keys='User.restaurant_id', back_populates='restaurant')
+    owner = db.relationship('User', foreign_keys=[owner_id], back_populates='owned_restaurant') 
+    staff_users = db.relationship('User', foreign_keys='User.restaurant_id', back_populates='restaurant')  
     foods = db.relationship('Food', back_populates='restaurant', lazy=True)
     orders = db.relationship('Order', back_populates='restaurant', lazy=True)
 
@@ -34,7 +40,44 @@ class Restaurant(db.Model):
             'image_url': self.image_url,
             'is_active': self.is_active,
             'opening_hours': self.opening_hours,
+            'tax_code': self.tax_code,
+            'approval_status': self.approval_status,
+            'approval_date': self.approval_date.isoformat() if self.approval_date else None,
+            'rejection_reason': self.rejection_reason,
             'owner_id': self.owner_id,
             'owner_name': self.owner.full_name if self.owner else None,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
+    
+    def can_be_approved(self):
+        """Kiểm tra restaurant có đủ điều kiện phê duyệt không"""
+        return (
+            self.name and
+            self.address and
+            self.phone and
+            self.email and
+            self.tax_code and
+            self.approval_status == 'pending'
+        )
+    
+    def approve(self, approved_by=None):
+        """Phê duyệt restaurant"""
+        from datetime import datetime
+        self.approval_status = 'approved'
+        self.approval_date = datetime.utcnow()
+        self.rejection_reason = None
+    
+    def reject(self, reason, rejected_by=None):
+        """Từ chối phê duyệt restaurant"""
+        from datetime import datetime
+        self.approval_status = 'rejected'
+        self.approval_date = datetime.utcnow()
+        self.rejection_reason = reason
+    
+    def get_staff_count(self):
+        """Đếm số lượng staff/manager"""
+        return len([user for user in self.staff_users if user.role in ['staff', 'manager']])
+    
+    def get_pending_invitations_count(self):
+        """Đếm số lời mời đang chờ"""
+        return len([inv for inv in self.invitations if inv.status == 'pending'])

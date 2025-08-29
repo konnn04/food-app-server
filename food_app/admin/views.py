@@ -8,6 +8,7 @@ from food_app.models.customer import Customer
 from food_app.models.food import Food
 from food_app.models.order import Order, OrderItem
 from food_app.models.restaurant import Restaurant
+from markupsafe import Markup
 
 class AdminRequiredMixin:
     def is_accessible(self):
@@ -19,9 +20,9 @@ class AdminRequiredMixin:
         return redirect(url_for('admin.login_view'))
 
 class UserModelView(AdminRequiredMixin, ModelView):
-    column_list = ('id', 'username', 'email', 'phone', 'first_name', 'last_name', 'role', 'is_active')
+    column_list = ('id', 'username', 'email', 'phone', 'first_name', 'last_name', 'role', 'restaurant', 'is_active')
     column_searchable_list = ('username', 'email', 'phone', 'first_name', 'last_name')
-    column_filters = ('role', 'is_active')
+    column_filters = ('role', 'is_active', 'restaurant.name')
     form_excluded_columns = ('password_hash', 'firebase_uid')
     
     def on_model_change(self, form, model, is_created):
@@ -37,9 +38,25 @@ class CustomerModelView(AdminRequiredMixin, ModelView):
     form_excluded_columns = ('firebase_uid', 'otp_code', 'otp_expires_at', 'otp_attempts')
 
 class RestaurantModelView(AdminRequiredMixin, ModelView):
-    column_list = ('id', 'name', 'address', 'phone', 'email', 'is_active')
-    column_searchable_list = ('name', 'address', 'phone', 'email')
-    column_filters = ('is_active',)
+    column_list = ('id', 'name', 'address', 'phone', 'email', 'tax_code', 'approval_status', 'owner', 'is_active')
+    column_searchable_list = ('name', 'address', 'phone', 'email', 'tax_code')
+    column_filters = ('is_active', 'approval_status', 'owner.first_name', 'owner.last_name')
+    column_sortable_list = ('id', 'name', 'created_at', 'approval_date')
+    
+    form_excluded_columns = ('created_at', 'approval_date')
+    
+    def _approval_status_formatter(view, context, model, name):
+        status_colors = {
+            'pending': 'warning',
+            'approved': 'success', 
+            'rejected': 'danger'
+        }
+        color = status_colors.get(model.approval_status, 'secondary')
+        return Markup(f'<span class="badge badge-{color}">{model.approval_status}</span>')
+    
+    column_formatters = {
+        'approval_status': _approval_status_formatter
+    }
 
 class FoodModelView(AdminRequiredMixin, ModelView):
     column_list = ('id', 'name', 'price', 'categories', 'available', 'restaurant.name')
