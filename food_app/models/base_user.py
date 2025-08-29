@@ -6,17 +6,18 @@ class BaseUser(db.Model):
     __tablename__ = 'base_users'
     
     id = db.Column(db.Integer, primary_key=True)
-    first_name = db.Column(db.String(50), nullable=False)
-    last_name = db.Column(db.String(50), nullable=False)
+    first_name = db.Column(db.String(50), nullable=False, default='Khách hàng')
+    last_name = db.Column(db.String(50), nullable=False, default='Mới')
     email = db.Column(db.String(120), unique=True, nullable=True)
     avatar = db.Column(db.String(255), nullable=True, default=f'https://api.dicebear.com/7.x/micah/png?seed={random.randint(1, 1000)}')
     phone = db.Column(db.String(20), unique=True, nullable=True)
     gender = db.Column(db.String(10), nullable=False, default='male') 
     date_of_birth = db.Column(db.Date, nullable=True)
-    address = db.Column(db.Text, nullable=True)
+    address = db.Column(db.Text, nullable=True, default='')
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime)
+    is_need_update = db.Column(db.Boolean, default=False)
     
     # Discriminator column for inheritance
     user_type = db.Column(db.String(20), nullable=False)
@@ -40,5 +41,6 @@ class BaseUser(db.Model):
             'is_active': self.is_active,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'last_login': self.last_login.isoformat() if self.last_login else None,
-            'user_type': self.user_type
+            'user_type': self.user_type,
+            'is_need_update': self.is_need_update
         }

@@ -113,12 +113,12 @@ def init_sample_data():
             db.session.add(staff)
             print("✓ Đã tạo tài khoản staff")
 
-        # 6. Tạo customer mẫu
+        # 6. Tạo customer mẫu (sử dụng số điện thoại linh động)
         if Customer.query.filter_by(phone='0987654321').first() is None:
             customer = Customer(
                 first_name='Lê Văn',
                 last_name='Khách',
-                phone='0987654321',
+                phone='0987654321',  # Số điện thoại hợp lệ
                 gender='male',
                 address='456 Lê Văn Sỹ, Q.3, TP.HCM',
                 user_type='customer'
@@ -130,7 +130,7 @@ def init_sample_data():
             customer2 = Customer(
                 first_name='Nguyễn Thị',
                 last_name='Hoa',
-                phone='0987654322',
+                phone='0987654322',  # Số điện thoại hợp lệ
                 email='customer@example.com',
                 gender='female',
                 address='789 Nguyễn Huệ, Q.1, TP.HCM',
