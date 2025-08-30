@@ -7,7 +7,6 @@ class Customer(BaseUser):
 
     id = db.Column(db.Integer, db.ForeignKey('base_users.id'), primary_key=True)
 
-    # Xóa phone column vì đã có trong BaseUser
     loyalty_points = db.Column(db.Integer, default=0)
     total_orders = db.Column(db.Integer, default=0)
     firebase_uid = db.Column(db.String(100), unique=True, nullable=True)
