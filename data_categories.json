@@ -1,0 +1,77 @@
+[
+    {
+            "id":1,
+            "name":"Đồ ăn vặt",
+            "description":"Các món ăn vặt hấp dẫn"
+        },
+        {
+            "id":2,
+            "name":"Món chính",
+            "description":"Các món ăn chính đầy đủ dinh dưỡng"
+        },
+        {
+            "id":3,
+            "name":"Tráng miệng",
+            "description":"Các món tráng miệng ngọt ngào"
+        },
+        {
+            "id": 4,
+            "name": "Đồ uống",
+            "description": "Các loại đồ uống giải khát"
+        },
+        {
+            "id": 5,
+            "name": "Cơm",
+            "description": "Các món cơm truyền thống"
+        },
+        {
+            "id": 6,
+            "name": "Bún",
+            "description": "Các món bún truyền thống"
+        },
+        {
+            "id": 7,
+            "name": "Phở",
+            "description": "Món phở truyền thống của Việt Nam"
+        },
+        {
+            "id": 8,
+            "name": "Mì",
+            "description": "Các món mì đa dạng"
+        },
+        {
+            "id": 9,
+            "name": "Hải sản",
+            "description": "Các món hải sản tươi ngon"
+        },
+        {
+            "id": 10,
+            "name": "Đồ nướng",
+            "description": "Các món nướng hấp dẫn"
+        },
+        {
+            "id": 11,
+            "name": "Món ăn chay",
+            "description": "Các món ăn chay thanh đạm"
+        },
+        {
+            "id": 12,
+            "name": "Món Âu",
+            "description": "Các món ăn phương Tây"
+        },
+        {
+            "id": 13,
+            "name": "Món ăn nhanh",
+            "description": "Các món ăn nhanh tiện lợi"
+        },
+        {
+            "id": 14,
+            "name": "Món ăn đường phố",
+            "description": "Các món ăn đường phố phổ biến"
+        },
+        {
+            "id": 15,
+            "name": "Món ăn gia đình",
+            "description": "Các món ăn gia đình ấm cúng"
+        }
+]
