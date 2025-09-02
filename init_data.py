@@ -29,7 +29,7 @@ def create_sample_data():
     
     with app.app_context():
         # Drop and recreate all tables
-        db.drop_all()
+        # db.drop_all()
         db.create_all()
         
         # Load food and categories data
@@ -49,14 +49,14 @@ def create_sample_data():
         print("Creating cancel reasons...")
         cancel_reasons = []
         reasons = [
-            "Khách hàng yêu cầu hủy",
-            "Nhà hàng không thể phục vụ",
-            "Thời gian giao hàng quá lâu",
-            "Sản phẩm hết hàng",
-            "Lý do khác"
+            {"code": "CUSTOMER_CANCEL", "description": "Khách hàng yêu cầu hủy"},
+            {"code": "RESTAURANT_UNAVAILABLE", "description": "Nhà hàng không thể phục vụ"},
+            {"code": "DELIVERY_TIMEOUT", "description": "Thời gian giao hàng quá lâu"},
+            {"code": "OUT_OF_STOCK", "description": "Sản phẩm hết hàng"},
+            {"code": "OTHER", "description": "Lý do khác"}
         ]
         for reason in reasons:
-            cancel_reason = CancelReason(name=reason)
+            cancel_reason = CancelReason(**reason)
             db.session.add(cancel_reason)
             cancel_reasons.append(cancel_reason)
         
@@ -64,11 +64,22 @@ def create_sample_data():
         users = []
         user_data = [
             {"username": "admin", "email": "admin@foodapp.com", "password": "admin123", "role": "admin"},
-            {"username": "owner1", "email": "owner1@foodapp.com", "password": "owner123", "role": "owner"},
-            {"username": "owner2", "email": "owner2@foodapp.com", "password": "owner123", "role": "owner"},
+        ]
+        
+        # Create owners (1 owner per restaurant)
+        for i in range(20):
+            user_data.append({
+                "username": f"owner{i+1}", 
+                "email": f"owner{i+1}@foodapp.com", 
+                "password": "owner123", 
+                "role": "owner"
+            })
+        
+        # Create staff
+        user_data.extend([
             {"username": "staff1", "email": "staff1@foodapp.com", "password": "staff123", "role": "staff"},
             {"username": "staff2", "email": "staff2@foodapp.com", "password": "staff123", "role": "staff"},
-        ]
+        ])
         
         for user_info in user_data:
             user = User(
@@ -83,15 +94,17 @@ def create_sample_data():
         # Create customers
         print("Creating customers...")
         customers = []
-        customer_names = ["Nguyễn Văn A", "Trần Thị B", "Lê Văn C", "Phạm Thị D", "Hoàng Văn E"]
-        for i, name in enumerate(customer_names):
+        customer_names = [
+            ("Nguyễn", "Văn A"), ("Trần", "Thị B"), ("Lê", "Văn C"), 
+            ("Phạm", "Thị D"), ("Hoàng", "Văn E")
+        ]
+        for i, (first_name, last_name) in enumerate(customer_names):
             customer = Customer(
-                user=users[0],  # Use admin user for customers
-                full_name=name,
+                first_name=first_name,
+                last_name=last_name,
                 phone=f"090123456{i}",
                 address=f"Địa chỉ {i+1}, TP.HCM",
-                latitude=10.754792 + random.uniform(-0.01, 0.01),
-                longitude=106.6952276 + random.uniform(-0.01, 0.01)
+                email=f"customer{i+1}@foodapp.com"
             )
             db.session.add(customer)
             customers.append(customer)
@@ -148,7 +161,7 @@ def create_sample_data():
                 ]),
                 is_active=True,
                 opening_hours="07:00-22:00",
-                owner=users[1] if i % 2 == 0 else users[2],  # Alternate between owners
+                owner=users[i+1],  # Each restaurant gets its own owner
                 latitude=lat,
                 longitude=lon,
                 tax_code=f"0123456789{i:02d}",
@@ -208,9 +221,8 @@ def create_sample_data():
                         description=food_info["description"],
                         price=price,
                         image_url=random.choice(food_info["images"]),
-                        is_available=True,
-                        restaurant=restaurant,
-                        preparation_time=random.randint(10, 30)
+                        available=True,
+                        restaurant=restaurant
                     )
                     db.session.add(food)
                     foods.append(food)
@@ -238,12 +250,10 @@ def create_sample_data():
             coupon = Coupon(
                 code=f"DISCOUNT{i+1:02d}",
                 description=f"Mã giảm giá {i+1}",
-                discount_type="percentage" if i % 2 == 0 else "fixed",
+                discount_type="percent" if i % 2 == 0 else "amount",
                 discount_value=10 if i % 2 == 0 else 5000,
                 min_order_amount=50000,
-                max_discount=20000,
-                usage_limit=100,
-                used_count=random.randint(0, 50),
+                max_discount_amount=20000,
                 start_date=datetime.now() - timedelta(days=random.randint(1, 30)),
                 end_date=datetime.now() + timedelta(days=random.randint(30, 90)),
                 is_active=True,
@@ -252,107 +262,7 @@ def create_sample_data():
             db.session.add(coupon)
             coupons.append(coupon)
         
-        print("Creating orders...")
-        orders = []
-        for i in range(50):
-            customer = random.choice(customers)
-            restaurant = random.choice(restaurants)
-            order_status = random.choice(["pending", "confirmed", "preparing", "ready", "delivered", "cancelled"])
-            
-            order = Order(
-                customer=customer,
-                restaurant=restaurant,
-                total_amount=Decimal(str(random.randint(50000, 200000))),
-                status=order_status,
-                delivery_address=customer.address,
-                delivery_phone=customer.phone,
-                notes=f"Ghi chú đơn hàng {i+1}",
-                created_at=datetime.now() - timedelta(days=random.randint(1, 30), hours=random.randint(0, 23))
-            )
-            
-            if order_status == "cancelled":
-                order.cancel_reason = random.choice(cancel_reasons)
-                order.cancel_note = f"Lý do hủy đơn hàng {i+1}"
-            
-            db.session.add(order)
-            orders.append(order)
-            
-            # Add order items
-            restaurant_foods = [f for f in foods if f.restaurant == restaurant]
-            if restaurant_foods:
-                num_items = random.randint(1, 3)
-                selected_foods = random.sample(restaurant_foods, min(num_items, len(restaurant_foods)))
-                
-                for food in selected_foods:
-                    quantity = random.randint(1, 3)
-                    item = OrderItem(
-                        order=order,
-                        food=food,
-                        quantity=quantity,
-                        unit_price=food.price,
-                        total_price=food.price * quantity
-                    )
-                    db.session.add(item)
-                    
-                    # Add toppings to some items
-                    if food.toppings and random.random() < 0.3:
-                        selected_toppings = random.sample(food.toppings, min(2, len(food.toppings)))
-                        for topping in selected_toppings:
-                            item.toppings.append(topping)
-        
-        print("Creating reviews...")
-        for i in range(30):
-            order = random.choice(orders)
-            if order.status == "delivered":
-                review = Review(
-                    order=order,
-                    customer=order.customer,
-                    restaurant=order.restaurant,
-                    rating=random.randint(3, 5),
-                    comment=f"Đánh giá món ăn {i+1}",
-                    created_at=order.created_at + timedelta(hours=random.randint(1, 24))
-                )
-                db.session.add(review)
-        
-        print("Creating invoices...")
-        for order in orders:
-            if order.status in ["delivered", "ready"]:
-                invoice = Invoice(
-                    order=order,
-                    subtotal=order.total_amount,
-                    tax_amount=Decimal(str(float(order.total_amount) * 0.1)),  # 10% tax
-                    total_amount=order.total_amount + Decimal(str(float(order.total_amount) * 0.1)),
-                    payment_method=random.choice(["cash", "card", "momo", "zalo"]),
-                    payment_status="paid",
-                    third_party_code=f"PAY{order.id:06d}",
-                    third_party_name=random.choice(["MoMo", "ZaloPay", "VNPay", "Cash"]),
-                    created_at=order.created_at + timedelta(minutes=random.randint(5, 30))
-                )
-                db.session.add(invoice)
-        
-        print("Creating carts...")
-        for customer in customers:
-            if random.random() < 0.3:  # 30% chance to have cart
-                cart = Cart(customer=customer)
-                db.session.add(cart)
-                
-                # Add cart items
-                num_items = random.randint(1, 3)
-                selected_foods = random.sample(foods, num_items)
-                
-                for food in selected_foods:
-                    cart_item = CartItem(
-                        cart=cart,
-                        food=food,
-                        quantity=random.randint(1, 2)
-                    )
-                    db.session.add(cart_item)
-                    
-                    # Add toppings to some items
-                    if food.toppings and random.random() < 0.2:
-                        selected_toppings = random.sample(food.toppings, min(1, len(food.toppings)))
-                        for topping in selected_toppings:
-                            cart_item.toppings.append(topping)
+        # Skip creating orders, invoices, reviews, and carts as requested
         
         db.session.commit()
         print("Sample data created successfully!")

@@ -5,7 +5,7 @@ from flasgger import swag_from
 food_bp = Blueprint('food', __name__)
 
 @food_bp.route('/', methods=['GET'])
-@swag_from({'tags': ['Food'], 'summary': 'List foods', 'parameters': [
+@swag_from({'tags': ['Food'], 'summary': 'List foods with restaurant info', 'parameters': [
     {'in': 'query', 'name': 'category', 'schema': {'type': 'integer'}},
     {'in': 'query', 'name': 'available', 'schema': {'type': 'boolean'}},
     {'in': 'query', 'name': 'q', 'schema': {'type': 'string'}},
@@ -14,7 +14,47 @@ food_bp = Blueprint('food', __name__)
     {'in': 'query', 'name': 'lat', 'schema': {'type': 'number', 'format': 'float'}, 'description': 'Default 10.754792'},
     {'in': 'query', 'name': 'lon', 'schema': {'type': 'number', 'format': 'float'}, 'description': 'Default 106.6952276'},
     {'in': 'query', 'name': 'max_km', 'schema': {'type': 'number', 'format': 'float'}}
-]})
+], 'responses': {
+    '200': {
+        'description': 'Success',
+        'schema': {
+            'type': 'object',
+            'properties': {
+                'success': {'type': 'boolean'},
+                'message': {'type': 'string'},
+                'data': {
+                    'type': 'object',
+                    'properties': {
+                        'items': {
+                            'type': 'array',
+                            'items': {
+                                'type': 'object',
+                                'properties': {
+                                    'id': {'type': 'integer'},
+                                    'name': {'type': 'string'},
+                                    'price': {'type': 'number'},
+                                    'distance_km': {'type': 'number'},
+                                    'restaurant': {
+                                        'type': 'object',
+                                        'properties': {
+                                            'id': {'type': 'integer'},
+                                            'name': {'type': 'string'},
+                                            'address': {'type': 'string'},
+                                            'phone': {'type': 'string'},
+                                            'latitude': {'type': 'number'},
+                                            'longitude': {'type': 'number'},
+                                            'distance_km': {'type': 'number'}
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}})
 def get_foods():
     """Lấy danh sách món ăn"""
     category = request.args.get('category')

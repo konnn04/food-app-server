@@ -21,6 +21,24 @@ class Food(db.Model):
     toppings = db.relationship('Topping', secondary=food_toppings, back_populates='foods', lazy=True)
     
     def to_dict(self):
+        restaurant_info = None
+        if self.restaurant:
+            restaurant_info = {
+                'id': self.restaurant.id,
+                'name': self.restaurant.name,
+                'address': self.restaurant.address,
+                'phone': self.restaurant.phone,
+                'email': self.restaurant.email,
+                'description': self.restaurant.description,
+                'image_url': self.restaurant.image_url,
+                'opening_hours': self.restaurant.opening_hours if isinstance(self.restaurant.opening_hours, str) else str(self.restaurant.opening_hours),
+                'latitude': self.restaurant.latitude,
+                'longitude': self.restaurant.longitude,
+                'is_active': self.restaurant.is_active,
+                'approval_status': self.restaurant.approval_status,
+                'tax_code': self.restaurant.tax_code
+            }
+        
         return {
             'id': self.id,
             'name': self.name,
@@ -31,6 +49,6 @@ class Food(db.Model):
             'image_url': self.image_url,
             'available': self.available,
             'restaurant_id': self.restaurant_id,
-            'restaurant_name': self.restaurant.name if self.restaurant else None,
+            'restaurant': restaurant_info,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }

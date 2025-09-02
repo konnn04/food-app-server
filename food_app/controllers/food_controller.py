@@ -42,6 +42,11 @@ class FoodController:
                 if rest and rest.latitude is not None and rest.longitude is not None:
                     distance_km = round(haversine(lat, lon, rest.latitude, rest.longitude), 3)
                 data['distance_km'] = distance_km
+                
+                # Thêm thông tin distance vào restaurant object nếu có
+                if data.get('restaurant') and distance_km is not None:
+                    data['restaurant']['distance_km'] = distance_km
+                
                 foods_data.append(data)
 
             return success_response('Lấy danh sách món ăn thành công', {'items': foods_data, 'meta': meta})
