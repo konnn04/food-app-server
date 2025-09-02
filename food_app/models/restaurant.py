@@ -14,6 +14,9 @@ class Restaurant(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     opening_hours = db.Column(db.JSON)  
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # Geo coordinates
+    latitude = db.Column(db.Float, nullable=True)
+    longitude = db.Column(db.Float, nullable=True)
     
     # Mối quan hệ 1-1 với owner
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)  
@@ -25,7 +28,8 @@ class Restaurant(db.Model):
     
     # Relationships
     owner = db.relationship('User', foreign_keys=[owner_id], back_populates='owned_restaurant') 
-    staff_users = db.relationship('User', foreign_keys='User.restaurant_id', back_populates='restaurant')  
+    from .restaurant_staff import restaurant_staff
+    staff_users = db.relationship('User', secondary=restaurant_staff, back_populates='restaurants')  
     foods = db.relationship('Food', back_populates='restaurant', lazy=True)
     orders = db.relationship('Order', back_populates='restaurant', lazy=True)
 
@@ -40,6 +44,8 @@ class Restaurant(db.Model):
             'image_url': self.image_url,
             'is_active': self.is_active,
             'opening_hours': self.opening_hours,
+            'latitude': self.latitude,
+            'longitude': self.longitude,
             'tax_code': self.tax_code,
             'approval_status': self.approval_status,
             'approval_date': self.approval_date.isoformat() if self.approval_date else None,
@@ -78,6 +84,4 @@ class Restaurant(db.Model):
         """Đếm số lượng staff/manager"""
         return len([user for user in self.staff_users if user.role in ['staff', 'manager']])
     
-    def get_pending_invitations_count(self):
-        """Đếm số lời mời đang chờ"""
-        return len([inv for inv in self.invitations if inv.status == 'pending'])
+    # Invitation feature removed

@@ -16,6 +16,9 @@ class Food(db.Model):
     # Relationships
     restaurant = db.relationship('Restaurant', back_populates='foods')
     categories = db.relationship('Category', secondary='food_categories', back_populates='foods', lazy=True)
+    # Toppings many-to-many
+    from .topping import food_toppings
+    toppings = db.relationship('Topping', secondary=food_toppings, back_populates='foods', lazy=True)
     
     def to_dict(self):
         return {
@@ -24,6 +27,7 @@ class Food(db.Model):
             'description': self.description,
             'price': self.price,
             'categories': [category.name for category in self.categories],
+            'toppings': [t.to_dict_basic() for t in self.toppings],
             'image_url': self.image_url,
             'available': self.available,
             'restaurant_id': self.restaurant_id,

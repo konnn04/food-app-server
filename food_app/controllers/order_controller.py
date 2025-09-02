@@ -15,9 +15,19 @@ class OrderController:
             if not customer:
                 return error_response('Khách hàng không tồn tại', 404)
 
+            # Xác định restaurant từ món đầu tiên
+            if not data['items']:
+                return error_response('Không có món trong đơn hàng', 400)
+            from food_app.models.food import Food
+            first_food = Food.query.get(data['items'][0]['food_id'])
+            if not first_food:
+                return error_response('Món ăn không tồn tại', 400)
+            restaurant_id = first_food.restaurant_id
+
             # Chuẩn bị dữ liệu order
             order_data = {
                 'customer_id': data['customer_id'],
+                'restaurant_id': restaurant_id,
                 'delivery_address': data.get('delivery_address'),
                 'delivery_phone': data.get('delivery_phone', customer.phone),
                 'notes': data.get('notes')
@@ -96,6 +106,21 @@ class OrderController:
             return error_response(f'Lỗi server: {str(e)}', 500)
 
     @staticmethod
+    def cancel_order(order_id, data):
+        try:
+            order = OrderDAO.get_order_by_id(order_id)
+            if not order:
+                return error_response('Không tìm thấy đơn hàng', 404)
+            cancel_reason_id = data.get('cancel_reason_id')
+            cancel_note = data.get('cancel_note')
+            order = OrderDAO.cancel_order(order, cancel_reason_id, cancel_note)
+            return success_response('Huỷ đơn thành công', order.to_dict())
+        except ValueError as e:
+            return error_response(str(e), 400)
+        except Exception as e:
+            return error_response(f'Lỗi server: {str(e)}', 500)
+
+    @staticmethod
     def assign_staff_to_order(order_id, staff_id):
         """Gán nhân viên xử lý đơn hàng"""
         try:
@@ -112,8 +137,8 @@ class OrderController:
             if staff.role not in ['staff', 'manager']:
                 return error_response('Người dùng không phải là nhân viên', 400)
 
-            # Kiểm tra staff thuộc restaurant của order
-            if staff.restaurant_id != order.restaurant_id:
+            # Kiểm tra staff thuộc nhà hàng của order (multi-restaurant)
+            if not any(r.id == order.restaurant_id for r in staff.restaurants):
                 return error_response('Nhân viên không thuộc nhà hàng này', 400)
 
             OrderDAO.update_order_status(order, {'assigned_staff_id': staff_id})

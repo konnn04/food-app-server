@@ -1,8 +1,9 @@
 from food_app.dao import RestaurantDAO, UserDAO
 from food_app.utils.responses import success_response, error_response
 from flask_jwt_extended import get_jwt_identity
-from food_app.models.invitation import Invitation
+from food_app.models.restaurant_staff import restaurant_staff
 from food_app import db
+from food_app.utils.pagination import paginate_query
 
 class RestaurantController:
     @staticmethod
@@ -61,6 +62,23 @@ class RestaurantController:
             return error_response(f'Lỗi server: {str(e)}', 500)
 
     @staticmethod
+    def list_restaurants():
+        try:
+            from flask import request
+            keyword = request.args.get('q')
+            page = request.args.get('page', 1)
+            per_page = request.args.get('per_page', 20)
+            lat = request.args.get('lat')
+            lon = request.args.get('lon')
+            max_km = request.args.get('max_km')
+            near = (float(lat), float(lon)) if lat and lon else None
+            query = RestaurantDAO.list_restaurants(keyword, near, float(max_km) if max_km else None)
+            items, meta = paginate_query(query, page, per_page)
+            return success_response('Lấy danh sách nhà hàng thành công', {'items': [r.to_dict() for r in items], 'meta': meta})
+        except Exception as e:
+            return error_response(f'Lỗi server: {str(e)}', 500)
+
+    @staticmethod
     def update_restaurant(data, current_user):
         """Owner cập nhật restaurant của mình"""
         try:
@@ -90,122 +108,79 @@ class RestaurantController:
             return error_response(f'Lỗi server: {str(e)}', 500)
 
     @staticmethod
-    def invite_staff(data, current_user):
-        """Owner mời staff/manager"""
+    def add_staff(data, current_user):
+        """Owner/manager thêm nhân viên vào nhà hàng (không cần invitation)"""
         try:
             if not current_user.can_invite_staff():
-                return error_response('Bạn không có quyền mời nhân viên', 403)
+                return error_response('Bạn không có quyền thêm nhân viên', 403)
 
             if not current_user.owned_restaurant:
                 return error_response('Bạn chưa tạo nhà hàng', 404)
 
-            # Validation
             username = data.get('username')
-            role = data.get('role')
-            message = data.get('message', '')
-
+            role = data.get('role', 'staff')
             if not username:
-                return error_response('Thiếu username của người được mời', 400)
-
+                return error_response('Thiếu username của nhân viên', 400)
             if role not in ['staff', 'manager']:
                 return error_response('Vai trò phải là staff hoặc manager', 400)
 
-            # Kiểm tra user tồn tại
-            invited_user = UserDAO.get_user_by_username(username)
-            if not invited_user:
+            staff_user = UserDAO.get_user_by_username(username)
+            if not staff_user:
                 return error_response('Không tìm thấy user với username này', 404)
 
-            # Kiểm tra user đã thuộc restaurant nào chưa
-            if invited_user.restaurant_id:
-                return error_response('User này đã thuộc một nhà hàng khác', 400)
-
-            # Kiểm tra đã mời chưa
-            existing_invitation = Invitation.query.filter_by(
-                restaurant_id=current_user.owned_restaurant.id,
-                invited_username=username,
-                status='pending'
+            # Thêm vào bảng liên kết nếu chưa tồn tại
+            restaurant = current_user.owned_restaurant
+            link_exists = db.session.execute(
+                db.select(restaurant_staff)
+                .where(restaurant_staff.c.user_id == staff_user.id)
+                .where(restaurant_staff.c.restaurant_id == restaurant.id)
             ).first()
+            if link_exists:
+                return error_response('Nhân viên đã thuộc nhà hàng này', 400)
 
-            if existing_invitation:
-                return error_response('Đã gửi lời mời cho user này rồi', 400)
-
-            # Tạo lời mời
-            invitation = Invitation(
-                restaurant_id=current_user.owned_restaurant.id,
-                invited_username=username,
-                invited_email=invited_user.email,
-                role=role,
-                invited_by=current_user.id,
-                message=message
+            db.session.execute(
+                restaurant_staff.insert().values(
+                    user_id=staff_user.id,
+                    restaurant_id=restaurant.id,
+                    role=role
+                )
             )
-
-            db.session.add(invitation)
             db.session.commit()
 
-            return success_response('Gửi lời mời thành công', invitation.to_dict(), 201)
+            return success_response('Thêm nhân viên thành công', staff_user.to_dict())
 
         except Exception as e:
             db.session.rollback()
             return error_response(f'Lỗi server: {str(e)}', 500)
 
     @staticmethod
-    def get_pending_invitations(current_user):
-        """Lấy danh sách lời mời đang chờ (owner xem)"""
+    def remove_staff(user_id, current_user):
+        """Owner/manager xóa nhân viên khỏi nhà hàng"""
         try:
-            if current_user.role != 'owner' or not current_user.owned_restaurant:
-                return error_response('Không có quyền truy cập', 403)
+            if not current_user.can_invite_staff():
+                return error_response('Bạn không có quyền xóa nhân viên', 403)
+            if not current_user.owned_restaurant:
+                return error_response('Bạn chưa tạo nhà hàng', 404)
 
-            invitations = current_user.get_pending_invitations()
-            invitations_data = [inv.to_dict() for inv in invitations]
-
-            return success_response('Lấy danh sách lời mời thành công', invitations_data)
-
-        except Exception as e:
-            return error_response(f'Lỗi server: {str(e)}', 500)
-
-    @staticmethod
-    def get_received_invitations(current_user):
-        """Lấy danh sách lời mời đã nhận (staff/manager xem)"""
-        try:
-            invitations = current_user.get_received_invitations()
-            invitations_data = [inv.to_dict() for inv in invitations]
-
-            return success_response('Lấy danh sách lời mời thành công', invitations_data)
-
-        except Exception as e:
-            return error_response(f'Lỗi server: {str(e)}', 500)
-
-    @staticmethod
-    def respond_to_invitation(invitation_id, action, current_user):
-        """Staff/Manager phản hồi lời mời"""
-        try:
-            invitation = Invitation.query.get(invitation_id)
-            if not invitation:
-                return error_response('Không tìm thấy lời mời', 404)
-
-            # Kiểm tra quyền
-            if invitation.invited_username != current_user.username:
-                return error_response('Bạn không có quyền phản hồi lời mời này', 403)
-
-            if invitation.status != 'pending':
-                return error_response('Lời mời này đã được xử lý', 400)
-
-            if action == 'accept':
-                invitation.accept(current_user)
-                message = f'Đã chấp nhận lời mời làm {invitation.role} tại {invitation.restaurant.name}'
-            elif action == 'reject':
-                invitation.reject()
-                message = 'Đã từ chối lời mời'
-            else:
-                return error_response('Hành động không hợp lệ', 400)
-
+            restaurant = current_user.owned_restaurant
+            deleted = db.session.execute(
+                restaurant_staff.delete()
+                .where(restaurant_staff.c.user_id == user_id)
+                .where(restaurant_staff.c.restaurant_id == restaurant.id)
+            )
+            if deleted.rowcount == 0:
+                db.session.rollback()
+                return error_response('Nhân viên không thuộc nhà hàng này', 404)
             db.session.commit()
-
-            return success_response(message, invitation.to_dict())
-
+            return success_response('Đã xóa nhân viên khỏi nhà hàng')
         except Exception as e:
             db.session.rollback()
             return error_response(f'Lỗi server: {str(e)}', 500)
+
+    @staticmethod
+    # Invitation-related endpoints removed
+
+    # Invitation handling removed
 
     @staticmethod
     def get_restaurant_staff(current_user):
@@ -214,7 +189,7 @@ class RestaurantController:
             if current_user.role == 'owner':
                 restaurant = current_user.owned_restaurant
             elif current_user.role in ['manager', 'staff']:
-                restaurant = current_user.restaurant
+                restaurant = current_user.restaurants[0] if current_user.restaurants else None
             else:
                 return error_response('Không có quyền truy cập', 403)
 

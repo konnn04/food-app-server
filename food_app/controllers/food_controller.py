@@ -1,15 +1,50 @@
 from food_app.dao import FoodDAO
 from food_app.utils.responses import success_response, error_response
+from food_app.utils.pagination import paginate_query
 
 class FoodController:
     @staticmethod
     def get_foods(category=None, available_only=True):
         """Lấy danh sách món ăn"""
         try:
-            foods = FoodDAO.get_foods_by_category(category, available_only)
-            foods_data = [food.to_dict() for food in foods]
+            from flask import request
+            keyword = request.args.get('q')
+            page = request.args.get('page', 1)
+            per_page = request.args.get('per_page', 20)
+            lat = request.args.get('lat')
+            lon = request.args.get('lon')
+            max_km = request.args.get('max_km')
+            # Default to HCMC center if not provided
+            if not lat or not lon:
+                lat = 10.754792
+                lon = 106.6952276
+            lat = float(lat)
+            lon = float(lon)
+            near = (lat, lon)
+            query = FoodDAO.get_foods(category, available_only, keyword, near, float(max_km) if max_km else None)
+            items, meta = paginate_query(query, page, per_page)
 
-            return success_response('Lấy danh sách món ăn thành công', foods_data)
+            # Compute distance (km) from provided/default location to restaurant location
+            import math
+            def haversine(lat1, lon1, lat2, lon2):
+                R = 6371.0
+                dlat = math.radians(lat2 - lat1)
+                dlon = math.radians(lon2 - lon1)
+                a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon/2)**2
+                c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+                return R * c
+
+            foods_data = []
+            for food in items:
+                data = food.to_dict()
+                rest = food.restaurant
+                distance_km = None
+                if rest and rest.latitude is not None and rest.longitude is not None:
+                    distance_km = round(haversine(lat, lon, rest.latitude, rest.longitude), 3)
+                data['distance_km'] = distance_km
+                foods_data.append(data)
+
+            return success_response('Lấy danh sách món ăn thành công', {'items': foods_data, 'meta': meta})
 
         except Exception as e:
             return error_response(f'Lỗi server: {str(e)}', 500)

@@ -44,20 +44,95 @@
     </div>
     
     <div class="row mt-4">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    Thông tin hệ thống
-                </div>
+        <div class="col-md-8">
+            <div class="card mb-3">
+                <div class="card-header">Doanh thu 7 ngày gần nhất</div>
                 <div class="card-body">
-                    <h5 class="card-title">Quản lý nhà hàng & đơn hàng</h5>
-                    <p class="card-text">Đây là trang quản trị của hệ thống đặt đồ ăn. Bạn có thể quản lý người dùng, món ăn, nhà hàng và đơn hàng.</p>
-                    <a href="{{ url_for('user.index_view') }}" class="btn btn-primary">Quản lý người dùng</a>
-                    <a href="{{ url_for('food.index_view') }}" class="btn btn-success">Quản lý món ăn</a>
-                    <a href="{{ url_for('order.index_view') }}" class="btn btn-info">Quản lý đơn hàng</a>
+                    <canvas id="dailyRevenueChart" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-header">Số đơn 7 ngày gần nhất</div>
+                <div class="card-body">
+                    <canvas id="dailyOrdersChart" height="120"></canvas>
                 </div>
             </div>
         </div>
     </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-header">Doanh thu theo tuần</div>
+                <div class="card-body">
+                    <canvas id="weeklyRevenueChart" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-header">Top 5 món ăn theo doanh thu</div>
+                <div class="card-body">
+                    <canvas id="topFoodsChart" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card mb-3">
+                <div class="card-header">Top 5 nhà hàng theo doanh thu</div>
+                <div class="card-body">
+                    <canvas id="topRestaurantsChart" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const dailyLabels = {{ daily_labels|tojson }};
+        const dailyRevenue = {{ daily_revenue|tojson }};
+        const dailyOrders = {{ daily_orders|tojson }};
+        const weeklyLabels = {{ weekly_labels|tojson }};
+        const weeklyRevenue = {{ weekly_revenue|tojson }};
+        const topFoodLabels = {{ top_food_labels|tojson }};
+        const topFoodRevenue = {{ top_food_revenue|tojson }};
+        const topRestLabels = {{ top_rest_labels|tojson }};
+        const topRestRevenue = {{ top_rest_revenue|tojson }};
+
+        new Chart(document.getElementById('dailyRevenueChart'), {
+            type: 'line',
+            data: { labels: dailyLabels, datasets: [{ label: 'Doanh thu (VND)', data: dailyRevenue, borderColor: '#36a2eb', fill: false }] },
+            options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        });
+
+        new Chart(document.getElementById('dailyOrdersChart'), {
+            type: 'bar',
+            data: { labels: dailyLabels, datasets: [{ label: 'Số đơn', data: dailyOrders, backgroundColor: '#4bc0c0' }] },
+            options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+        });
+
+        new Chart(document.getElementById('weeklyRevenueChart'), {
+            type: 'bar',
+            data: { labels: weeklyLabels, datasets: [{ label: 'Doanh thu tuần (VND)', data: weeklyRevenue, backgroundColor: '#ffcd56' }] },
+            options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        });
+
+        new Chart(document.getElementById('topFoodsChart'), {
+            type: 'bar',
+            data: { labels: topFoodLabels, datasets: [{ label: 'Doanh thu (VND)', data: topFoodRevenue, backgroundColor: '#9966ff' }] },
+            options: { indexAxis: 'y', responsive: true, scales: { x: { beginAtZero: true } } }
+        });
+
+        new Chart(document.getElementById('topRestaurantsChart'), {
+            type: 'bar',
+            data: { labels: topRestLabels, datasets: [{ label: 'Doanh thu (VND)', data: topRestRevenue, backgroundColor: '#ff6384' }] },
+            options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        });
+    </script>
 </div>
 {% endblock %}

@@ -1,20 +1,22 @@
 from food_app import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from .base_user import BaseUser
+from flask_login import UserMixin
 
-class User(BaseUser):
+class User(UserMixin, BaseUser):
     __tablename__ = 'users'
     
     id = db.Column(db.Integer, db.ForeignKey('base_users.id'), primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
+    password_hash = db.Column(db.String(512), nullable=False)
     
     role = db.Column(db.String(20), nullable=False, default='staff') 
-    restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurants.id'), nullable=True) 
+    restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurants.id'), nullable=True)
     
     # Relationships
     assigned_orders = db.relationship('Order', foreign_keys='Order.assigned_staff_id', backref='assigned_staff')
-    restaurant = db.relationship('Restaurant', foreign_keys=[restaurant_id], back_populates='staff_users')
+    from .restaurant_staff import restaurant_staff
+    restaurants = db.relationship('Restaurant', secondary=restaurant_staff, back_populates='staff_users')
     owned_restaurant = db.relationship('Restaurant', foreign_keys='Restaurant.owner_id', back_populates='owner', uselist=False) 
     
     __mapper_args__ = {
@@ -41,8 +43,7 @@ class User(BaseUser):
             'username': self.username,
             'email': self.email,
             'role': self.role,
-            'restaurant_id': self.restaurant_id,
-            'restaurant_name': self.restaurant.name if self.restaurant else None,
+            'restaurants': [{'id': r.id, 'name': r.name} for r in self.restaurants],
             'owned_restaurant': self.owned_restaurant.to_dict() if self.owned_restaurant else None
         })
         return data
@@ -63,24 +64,10 @@ class User(BaseUser):
             # Owner chỉ quản lý restaurant của mình
             return self.owned_restaurant and self.owned_restaurant.id == restaurant_id
         if self.role in ['manager', 'staff']:
-            # Staff/Manager quản lý restaurant được gán
-            return self.restaurant_id == restaurant_id
+            return any(r.id == restaurant_id for r in self.restaurants)
         return False
     
     def can_invite_staff(self):
         """Kiểm tra có quyền mời staff không"""
         return self.role in ['owner', 'manager']
     
-    def get_pending_invitations(self):
-        """Lấy danh sách lời mời đang chờ"""
-        if self.role == 'owner' and self.owned_restaurant:
-            return [inv for inv in self.owned_restaurant.invitations if inv.status == 'pending']
-        return []
-    
-    def get_received_invitations(self):
-        """Lấy danh sách lời mời đã nhận"""
-        from food_app.models.invitation import Invitation
-        return Invitation.query.filter_by(
-            invited_username=self.username,
-            status='pending'
-        ).all()

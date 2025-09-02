@@ -1,0 +1,20 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<div class="container mt-5" style="max-width:420px;">
+    <h3 class="mb-4">Đăng nhập quản trị</h3>
+    <form method="post">
+        <div class="form-group mb-3">
+            <label>Tên đăng nhập hoặc Email</label>
+            <input type="text" class="form-control" name="username" required>
+        </div>
+        <div class="form-group mb-3">
+            <label>Mật khẩu</label>
+            <input type="password" class="form-control" name="password" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Đăng nhập</button>
+    </form>
+</div>
+{% endblock %}
+
+

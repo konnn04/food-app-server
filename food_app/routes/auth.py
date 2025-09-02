@@ -3,10 +3,34 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from food_app.controllers.auth_controller import AuthController
 from food_app.dao import UserDAO, CustomerDAO
 from food_app.utils.decorators import require_role
+from flasgger import swag_from
 
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/staff/login', methods=['POST'])
+@swag_from({
+    'tags': ['Auth'],
+    'summary': 'Staff/admin login',
+    'requestBody': {
+        'required': True,
+        'content': {
+            'application/json': {
+                'schema': {
+                    'type': 'object',
+                    'properties': {
+                        'username': {'type': 'string'},
+                        'password': {'type': 'string'}
+                    },
+                    'required': ['username', 'password']
+                }
+            }
+        }
+    },
+    'responses': {
+        '200': {'description': 'Success'},
+        '401': {'description': 'Invalid credentials'}
+    }
+})
 def staff_login():
     data = request.get_json()
     return AuthController.staff_login(data)
