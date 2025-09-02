@@ -11,7 +11,6 @@ app = create_app()
 
 def init_sample_data():
     with app.app_context():
-        # Reset schema to ensure new columns exist
         # db.drop_all()
         db.create_all()
         print("Đã tạo lại schema database...")
