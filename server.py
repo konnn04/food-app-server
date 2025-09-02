@@ -1,19 +1,12 @@
 import os
-from app import create_app
+from food_app import create_app
+from flasgger import swag_from
 
 app = create_app(os.getenv('FLASK_ENV', 'development'))
 
 @app.route('/')
-def index():
-    return {
-        'message': 'Food Ordering API',
-        'version': '1.0.0',
-        'endpoints': {
-            'auth': '/api/auth',
-            'food': '/api/food',
-            'order': '/api/order'
-        }
-    }
+def root():
+    return {'message': 'Food App Server', 'docs': '/apidocs/'}, 200
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
