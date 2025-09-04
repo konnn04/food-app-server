@@ -1,5 +1,8 @@
 from food_app.dao.coupon_dao import CouponDAO
 from food_app.utils.responses import success_response, error_response
+from food_app.models.coupon import Coupon
+from food_app.models.restaurant import Restaurant
+from food_app import db
 
 class CouponController:
     @staticmethod
@@ -54,6 +57,77 @@ class CouponController:
                 'discount': discount,
                 'payable': max(order_amount - discount, 0)
             })
+        except Exception as e:
+            return error_response(f'Lỗi server: {str(e)}', 500)
+
+    @staticmethod
+    def list_public(params):
+        try:
+            query = Coupon.query.filter_by(is_active=True)
+            restaurant_id = params.get('restaurant_id')
+            if restaurant_id:
+                query = query.filter(Coupon.restaurant_id == int(restaurant_id))
+            coupons = query.order_by(Coupon.id.desc()).all()
+            return success_response('Lấy danh sách mã giảm giá', [c.to_dict() for c in coupons])
+        except Exception as e:
+            return error_response(f'Lỗi server: {str(e)}', 500)
+
+    @staticmethod
+    def get_by_code(code):
+        try:
+            coupon = CouponDAO.get_coupon_by_code(code)
+            if not coupon:
+                return error_response('Không tìm thấy mã', 404)
+            return success_response('OK', coupon.to_dict())
+        except Exception as e:
+            return error_response(f'Lỗi server: {str(e)}', 500)
+
+    @staticmethod
+    def list_by_restaurant(restaurant_id, current_user):
+        try:
+            if not current_user.can_manage_restaurant(int(restaurant_id)):
+                return error_response('Không có quyền', 403)
+            coupons = Coupon.query.filter_by(restaurant_id=int(restaurant_id)).order_by(Coupon.id.desc()).all()
+            return success_response('OK', [c.to_dict() for c in coupons])
+        except Exception as e:
+            return error_response(f'Lỗi server: {str(e)}', 500)
+
+    @staticmethod
+    def staff_create(restaurant_id, data, current_user):
+        try:
+            restaurant_id = int(restaurant_id)
+            if not current_user.can_manage_restaurant(restaurant_id):
+                return error_response('Không có quyền', 403)
+            data['restaurant_id'] = restaurant_id
+            coupon = CouponDAO.create_coupon(data)
+            return success_response('Tạo mã thành công', coupon.to_dict(), 201)
+        except Exception as e:
+            return error_response(f'Lỗi server: {str(e)}', 500)
+
+    @staticmethod
+    def staff_update(coupon_id, data, current_user):
+        try:
+            coupon = Coupon.query.get(coupon_id)
+            if not coupon:
+                return error_response('Không tìm thấy mã', 404)
+            if not current_user.can_manage_restaurant(coupon.restaurant_id):
+                return error_response('Không có quyền', 403)
+            coupon = CouponDAO.update_coupon(coupon, data)
+            return success_response('Cập nhật thành công', coupon.to_dict())
+        except Exception as e:
+            return error_response(f'Lỗi server: {str(e)}', 500)
+
+    @staticmethod
+    def staff_delete(coupon_id, current_user):
+        try:
+            coupon = Coupon.query.get(coupon_id)
+            if not coupon:
+                return error_response('Không tìm thấy mã', 404)
+            if not current_user.can_manage_restaurant(coupon.restaurant_id):
+                return error_response('Không có quyền', 403)
+            db.session.delete(coupon)
+            db.session.commit()
+            return success_response('Đã xoá mã giảm giá')
         except Exception as e:
             return error_response(f'Lỗi server: {str(e)}', 500)
 
