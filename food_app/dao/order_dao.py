@@ -1,5 +1,7 @@
 from food_app import db
-from food_app.models.order import Order, OrderItem, OrderItemTopping
+from food_app.models.order import Order
+from food_app.models.order_item import OrderItem
+from food_app.models.order_item_topping import OrderItemTopping
 from food_app.models.food import Food
 from food_app.models.topping import Topping
 from sqlalchemy import func
@@ -47,8 +49,9 @@ class OrderDAO:
 
             item_total = quantity * price
 
-            # Handle toppings
+            # Handle toppings - lưu từng topping riêng biệt
             toppings = item_data.get('toppings', [])
+            toppings_total = 0.0
             for topping_entry in toppings:
                 topping_id = topping_entry['topping_id'] if isinstance(topping_entry, dict) else topping_entry
                 topping = Topping.query.get(topping_id)
@@ -56,9 +59,20 @@ class OrderDAO:
                     raise ValueError('Topping không hợp lệ')
                 t_qty = int(topping_entry.get('quantity', 1)) if isinstance(topping_entry, dict) else 1
                 t_price = float(topping_entry.get('price', topping.price)) if isinstance(topping_entry, dict) else topping.price
-                oit = OrderItemTopping(order_item_id=item.id, topping_id=topping.id, quantity=t_qty, price=t_price)
-                db.session.add(oit)
-                item_total += t_qty * t_price
+                
+                # Tạo OrderItemTopping
+                order_item_topping = OrderItemTopping(
+                    order_item_id=item.id,
+                    topping_id=topping.id,
+                    quantity=t_qty,
+                    price=t_price
+                )
+                db.session.add(order_item_topping)
+                toppings_total += t_qty * t_price
+            
+            # Cập nhật giá của item để bao gồm toppings
+            item.price += toppings_total
+            item_total = quantity * item.price
 
             total_amount += item_total
 

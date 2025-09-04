@@ -9,6 +9,7 @@ class Customer(BaseUser):
 
     loyalty_points = db.Column(db.Integer, default=0)
     total_orders = db.Column(db.Integer, default=0)
+    balance = db.Column(db.Float, default=0.0)
     firebase_uid = db.Column(db.String(100), unique=True, nullable=True)
 
     orders = db.relationship('Order', back_populates='customer', lazy=True)

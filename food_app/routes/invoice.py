@@ -10,7 +10,7 @@ def create_invoice():
     data = request.get_json()
     return InvoiceController.create_invoice(data)
 
-@invoice_bp.route('/order/<int:order_id>', methods=['GET'])
+@invoice_bp.route('/order/<int:order_id>/', methods=['GET'])
 @swag_from({'tags': ['Invoice'], 'summary': 'Get invoice by order id'})
 def get_invoice(order_id):
     return InvoiceController.get_invoice_by_order(order_id)

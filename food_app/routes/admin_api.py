@@ -6,7 +6,7 @@ from flasgger import swag_from
 
 admin_api_bp = Blueprint('admin_api', __name__)
 
-@admin_api_bp.route('/dashboard', methods=['GET'])
+@admin_api_bp.route('/dashboard/', methods=['GET'])
 @jwt_required()
 @admin_required
 @swag_from({'tags': ['Admin'], 'summary': 'Dashboard stats'})
@@ -14,7 +14,7 @@ def get_dashboard_data():
     """API lấy dữ liệu tổng quan cho dashboard"""
     return AdminController.get_dashboard_data()
 
-@admin_api_bp.route('/users', methods=['GET'])
+@admin_api_bp.route('/users/', methods=['GET'])
 @jwt_required()
 @admin_required
 @swag_from({'tags': ['Admin'], 'summary': 'List users'})
@@ -23,7 +23,7 @@ def get_users():
     role = request.args.get('role')
     return AdminController.get_users(role)
 
-@admin_api_bp.route('/customers', methods=['GET'])
+@admin_api_bp.route('/customers/', methods=['GET'])
 @jwt_required()
 @admin_required
 @swag_from({'tags': ['Admin'], 'summary': 'List customers'})
@@ -31,7 +31,7 @@ def get_customers():
     """API lấy danh sách khách hàng"""
     return AdminController.get_customers()
 
-@admin_api_bp.route('/orders', methods=['GET'])
+@admin_api_bp.route('/orders/', methods=['GET'])
 @jwt_required()
 @admin_required
 @swag_from({'tags': ['Admin'], 'summary': 'List all orders'})

@@ -12,9 +12,10 @@ class User(UserMixin, BaseUser):
     
     role = db.Column(db.String(20), nullable=False, default='staff') 
     restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurants.id'), nullable=True)
+    balance = db.Column(db.Float, default=0.0)  # Số dư tài khoản
     
     # Relationships
-    assigned_orders = db.relationship('Order', foreign_keys='Order.assigned_staff_id', backref='assigned_staff')
+    assigned_orders = db.relationship('Order', foreign_keys='Order.assigned_staff_id', back_populates='assigned_staff')
     from .restaurant_staff import restaurant_staff
     restaurants = db.relationship('Restaurant', secondary=restaurant_staff, back_populates='staff_users')
     owned_restaurant = db.relationship('Restaurant', foreign_keys='Restaurant.owner_id', back_populates='owner', uselist=False) 
@@ -43,6 +44,8 @@ class User(UserMixin, BaseUser):
             'username': self.username,
             'email': self.email,
             'role': self.role,
+            'restaurant_id': self.restaurant_id,
+            'balance': self.balance,
             'restaurants': [{'id': r.id, 'name': r.name} for r in self.restaurants],
             'owned_restaurant': self.owned_restaurant.to_dict() if self.owned_restaurant else None
         })

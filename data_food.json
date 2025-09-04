@@ -1,6 +1,6 @@
 [
     {
-        "name": "Bánh bèo",
+        "names": ["Bánh bèo tép", "Bánh bèo tôm", "Bánh bèo thịt", "Bánh bèo mực", "Bánh bèo trứng"],
         "description": "Bánh bèo là một loại bánh truyền thống của người Việt Nam, được làm từ bột gạo và thường được ăn kèm với tôm, thịt hoặc mỡ hành.",
         "categories": [1, 3, 13, 14],
         "random_price": [15000, 20000, 25000, 30000],
@@ -31,12 +31,16 @@
                 "price": 7000
             },
             {
-                "name": "Nước mắm",
-                "price": 2000
+                "name": "Nước mắm ngọt",
+                "price": 0
+            },
+            {
+                "name": "Nước mắm cay",
+                "price": 0
             }
         ]
     }, {
-        "name": "Bánh bột lọc",
+        "names": ["Bánh bột lọc tép", "Bánh bột lọc tôm", "Bánh bột lọc thịt", "Bánh bột lọc mực", "Bánh bột lọc trứng"],
         "description": "Bánh bột lọc là một loại bánh truyền thống của người Việt Nam, được làm từ bột năng và thường được nhân với tôm, thịt hoặc đậu xanh.",
         "categories": [1, 3, 13, 14],
         "random_price": [15000, 20000, 25000, 30000],
@@ -67,13 +71,17 @@
                 "price": 7000
             },
             {
-                "name": "Nước mắm",
+                "name": "Nước mắm ngọt",
                 "price": 2000
+            },
+            {
+                "name": "Nước mắm cay",
+                "price": 0
             }
         ]
     },
     {
-        "name": "Bánh canh",
+        "names": ["Bánh canh cá", "Bánh canh tôm", "Bánh canh thịt", "Bánh canh mực", "Bánh canh giò heo", "Bánh canh cua"],
         "description": "Bánh canh là một loại mì nước truyền thống của người Việt Nam, được làm từ bột gạo hoặc bột lọc và thường được ăn kèm với tôm, thịt hoặc chả cá.",
         "categories": [2, 8, 13, 14],
         "random_price": [30000, 40000, 50000, 60000],
@@ -110,7 +118,7 @@
         ]
     },
     {
-        "name": "Bánh cuốn",
+        "names": ["Bánh cuốn tép", "Bánh cuốn tôm", "Bánh cuốn thịt", "Bánh cuốn mực", "Bánh cuốn trứng"],
         "description": "Bánh cuốn là một loại bánh truyền thống của người Việt Nam, được làm từ bột gạo và thường được nhân với thịt, mộc nhĩ và nấm hương.",
         "categories": [1, 2, 3, 13, 14],
         "random_price": [20000, 25000, 30000, 35000],
@@ -147,7 +155,7 @@
         ]
     }, 
     {
-        "name": "Bánh mì",
+        "names": ["Bánh mì chả cá", "Bánh mì trứng", "Bánh mì thịt heo quay", "Bánh mì thịt heo nướng", "Bánh mì cá ", "Bánh mì chay", "Bánh mì chả lụa"],
         "description": "Bánh mì là một loại bánh sandwich truyền thống của người Việt Nam, được làm từ bánh mì và thường được nhân với thịt, rau và các loại gia vị.",
         "categories": [1, 2, 3, 13, 14],
         "random_price": [20000, 25000, 30000, 35000],
@@ -185,7 +193,7 @@
         ]
     },
     {
-        "name": "Bánh xèo",
+        "names": ["Bánh xèo tép", "Bánh xèo tôm", "Bánh xèo thịt", "Bánh xèo mực", "Bánh xèo trứng"],
         "description": "Bánh xèo là một loại bánh truyền thống của người Việt Nam, được làm từ bột gạo và nước cốt dừa, thường được nhân với tôm, thịt và giá đỗ.",
         "categories": [1, 3, 13, 14],
         "random_price": [30000, 40000, 50000, 60000],
@@ -222,7 +230,7 @@
         ]
     },
     {
-        "name":"Bún thịt nướng",
+        "names": ["Bún thịt nướng nem", "Bún thịt nướng tôm", "Bún thịt nướng thịt", "Bún thịt nướng mực"],
         "description":"Bún thịt nướng là một món ăn truyền thống của người Việt Nam, bao gồm bún tươi, thịt nướng, rau sống và nước mắm chua ngọt.",
         "categories": [1, 2, 3, 13, 14],
         "random_price": [20000, 25000, 30000, 35000],
@@ -255,7 +263,7 @@
         ]
     },
     {
-        "name": "Cơm tấm",
+        "names": ["Cơm sườn", "Cơm gà", "Cơm heo quay", "Cơm heo nướng", "Cơm cá", "Cơm chay", "Cơm xào bò", "Cơm xào hải sản"],
         "description": "Cơm tấm là một món ăn truyền thống của người Việt Nam, bao gồm cơm tấm, sườn nướng, chả trứng và các loại rau sống.",
         "categories": [1, 2, 3, 13, 14],
         "random_price": [20000, 25000, 30000, 35000],
@@ -292,7 +300,7 @@
         ]
     },
     {
-        "name": "Hủ tiếu",
+        "names": ["Hủ tiếu thịt", "Hủ tiếu tôm", "Hủ tiếu thịt heo", "Hủ tiếu mực", "Hủ tiếu trứng", "Hủ tiếu khô", "Hủ tiếu thập cẩm"],
         "description": "Hủ tiếu là một món ăn truyền thống của người Việt Nam, bao gồm hủ tiếu, thịt heo, tôm, mực và rau sống.",
         "categories": [1, 2, 3, 13, 14],
         "random_price": [20000, 25000, 30000, 35000],
@@ -333,7 +341,7 @@
         ]
     },
     {
-        "name": "Nem chua",
+        "names": ["Nem chua thịt", "Nem chua tôm", "Nem chua thịt heo", "Nem chua mực", "Nem chua trứng", "Nem chua khô", "Nem chua thập cẩm"],
         "description": "Nem chua là một món ăn truyền thống của người Việt Nam, bao gồm thịt heo, bì lợn, tỏi và ớt, được lên men.",
         "categories": [1, 2, 3, 13, 14],
         "random_price": [23600, 23600, 36000, 36360],
@@ -374,7 +382,7 @@
         ]
     },
     {
-        "name": "Phở",
+        "names": ["Phở thịt", "Phở tôm", "Phở thịt heo", "Phở mực", "Phở trứng", "Phở khô", "Phở thập cẩm"],
         "description": "Phở là một món ăn truyền thống của người Việt Nam, bao gồm bánh phở, thịt bò, nước dùng và rau thơm.",
         "categories": [1, 2, 3, 13, 14],
         "random_price": [20000, 25000, 30000, 35000],

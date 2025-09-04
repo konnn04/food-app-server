@@ -27,23 +27,19 @@ def create_app(config_name='default'):
     
     # Đăng ký blueprints
     from food_app.routes.auth import auth_bp
-    from food_app.routes.food import food_bp
-    from food_app.routes.order import order_bp
-    from food_app.routes.review import review_bp
-    from food_app.routes.cart import cart_bp
-    from food_app.routes.coupon import coupon_bp
-    from food_app.routes.invoice import invoice_bp
+    from food_app.routes.search import search_bp
+    from food_app.routes.customer import customer_bp
+    from food_app.routes.staff import staff_bp
     from food_app.routes.admin_api import admin_api_bp
+    from food_app.routes.food import food_bp
     from food_app.routes.restaurant import restaurant_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
-    app.register_blueprint(food_bp, url_prefix='/api/food')
-    app.register_blueprint(order_bp, url_prefix='/api/order')
-    app.register_blueprint(review_bp, url_prefix='/api/review')
-    app.register_blueprint(cart_bp, url_prefix='/api/cart')
-    app.register_blueprint(coupon_bp, url_prefix='/api/coupon')
-    app.register_blueprint(invoice_bp, url_prefix='/api/invoice')
+    app.register_blueprint(search_bp, url_prefix='/api/search')
+    app.register_blueprint(customer_bp, url_prefix='/api/customer')
+    app.register_blueprint(staff_bp, url_prefix='/api/staff')
     app.register_blueprint(admin_api_bp, url_prefix='/api/admin')
+    app.register_blueprint(food_bp, url_prefix='/api/food')
     app.register_blueprint(restaurant_bp, url_prefix='/api/restaurant')
     from food_app.models.user import User
     @login_manager.user_loader

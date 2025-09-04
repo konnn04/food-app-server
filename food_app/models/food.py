@@ -19,6 +19,7 @@ class Food(db.Model):
     # Toppings many-to-many
     from .topping import food_toppings
     toppings = db.relationship('Topping', secondary=food_toppings, back_populates='foods', lazy=True)
+    order_items = db.relationship('OrderItem', back_populates='food', lazy=True)
     
     def to_dict(self):
         restaurant_info = None

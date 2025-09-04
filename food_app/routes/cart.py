@@ -10,13 +10,13 @@ def get_cart():
     customer_id = request.args.get('customer_id')
     return CartController.get_cart(customer_id)
 
-@cart_bp.route('/add', methods=['POST'])
+@cart_bp.route('/add/', methods=['POST'])
 @swag_from({'tags': ['Cart'], 'summary': 'Add item to cart'})
 def add_to_cart():
     data = request.get_json()
     return CartController.add_to_cart(data)
 
-@cart_bp.route('/clear', methods=['POST'])
+@cart_bp.route('/clear/', methods=['POST'])
 @swag_from({'tags': ['Cart'], 'summary': 'Clear cart'})
 def clear_cart():
     data = request.get_json()
