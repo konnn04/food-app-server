@@ -31,16 +31,21 @@ def create_app(config_name='default'):
     from food_app.routes.customer import customer_bp
     from food_app.routes.staff import staff_bp
     from food_app.routes.admin_api import admin_api_bp
+    from food_app.routes.category import category_bp
     from food_app.routes.food import food_bp
     from food_app.routes.restaurant import restaurant_bp
+    from food_app.routes.coupon import coupon_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(search_bp, url_prefix='/api/search')
     app.register_blueprint(customer_bp, url_prefix='/api/customer')
     app.register_blueprint(staff_bp, url_prefix='/api/staff')
     app.register_blueprint(admin_api_bp, url_prefix='/api/admin')
+    app.register_blueprint(category_bp, url_prefix='/api/category')
     app.register_blueprint(food_bp, url_prefix='/api/food')
     app.register_blueprint(restaurant_bp, url_prefix='/api/restaurant')
+    app.register_blueprint(coupon_bp, url_prefix='/api/coupon')
+    
     from food_app.models.user import User
     @login_manager.user_loader
     def load_user(user_id):

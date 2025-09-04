@@ -25,8 +25,8 @@ def load_food_data():
     return food_data, categories_data
 
 def create_sample_data():
-    app = create_app()
-    
+app = create_app()
+
     with app.app_context():
         # Drop and recreate all tables
         # db.drop_all()
@@ -219,8 +219,8 @@ def create_sample_data():
             )
             db.session.add(restaurant)
             restaurants.append(restaurant)
-        
-        db.session.commit()
+            
+            db.session.commit()
         
         print("Creating foods...")
         foods = []
@@ -256,7 +256,7 @@ def create_sample_data():
                     all_toppings[topping_name] = topping
         
         db.session.commit()
-        
+
         for i, (restaurant, specialties) in enumerate(zip(restaurants, restaurant_specialties)):
             for specialty in specialties:
                 if specialty in food_type_mapping:
@@ -311,7 +311,7 @@ def create_sample_data():
             coupons.append(coupon)
         
         # Skip creating orders, invoices, reviews, and carts as requested
-        
+
         db.session.commit()
         print("Sample data created successfully!")
 
