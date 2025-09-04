@@ -66,8 +66,8 @@ def create_sample_data():
             {"username": "admin", "email": "admin@foodapp.com", "password": "admin123", "role": "admin"},
         ]
         
-        # Create owners (1 owner per restaurant)
-        for i in range(20):
+        # Create owners (165 owners cho 165 restaurants)
+        for i in range(165):
             user_data.append({
                 "username": f"owner{i+1}", 
                 "email": f"owner{i+1}@foodapp.com", 
@@ -91,6 +91,8 @@ def create_sample_data():
             db.session.add(user)
             users.append(user)
         
+        db.session.commit()
+        
         # Create customers
         print("Creating customers...")
         customers = []
@@ -111,37 +113,84 @@ def create_sample_data():
         
         print("Creating restaurants...")
         restaurants = []
-        restaurant_names = [
-            "Phở Cô Ba", "Hủ Tiếu Mỹ Tho", "Bún Bò Huế", "Cơm Tấm Sài Gòn",
-            "Bánh Mì Hoà Bình", "Phở Ông Sáu", "Hủ Tiếu Cô Bảy", "Bún Thịt Nướng Cô Tám",
-            "Cơm Tấm Ông Chín", "Bánh Xèo Cô Mười", "Phở Cô Một", "Hủ Tiếu Ông Hai",
-            "Bún Bò Cô Ba", "Cơm Tấm Ông Tư", "Bánh Mì Cô Năm", "Phở Ông Sáu",
-            "Hủ Tiếu Cô Bảy", "Bún Thịt Nướng Ông Tám", "Cơm Tấm Cô Chín", "Bánh Xèo Ông Mười"
-        ]
         
-        # Restaurant specialties (2-4 dishes per restaurant)
-        restaurant_specialties = [
-            ["Phở", "Bánh mì"],  # Phở Cô Ba
-            ["Hủ tiếu", "Bánh cuốn"],  # Hủ Tiếu Mỹ Tho
-            ["Bún bò", "Nem chua"],  # Bún Bò Huế
-            ["Cơm tấm", "Bánh xèo"],  # Cơm Tấm Sài Gòn
-            ["Bánh mì", "Bánh bèo"],  # Bánh Mì Hoà Bình
-            ["Phở", "Bánh bột lọc"],  # Phở Ông Sáu
-            ["Hủ tiếu", "Bánh canh"],  # Hủ Tiếu Cô Bảy
-            ["Bún thịt nướng", "Bánh cuốn"],  # Bún Thịt Nướng Cô Tám
-            ["Cơm tấm", "Bánh mì"],  # Cơm Tấm Ông Chín
-            ["Bánh xèo", "Bánh bèo"],  # Bánh Xèo Cô Mười
-            ["Phở", "Bánh bột lọc"],  # Phở Cô Một
-            ["Hủ tiếu", "Bánh canh"],  # Hủ Tiếu Ông Hai
-            ["Bún bò", "Nem chua"],  # Bún Bò Cô Ba
-            ["Cơm tấm", "Bánh xèo"],  # Cơm Tấm Ông Tư
-            ["Bánh mì", "Bánh bèo"],  # Bánh Mì Cô Năm
-            ["Phở", "Bánh bột lọc"],  # Phở Ông Sáu
-            ["Hủ tiếu", "Bánh canh"],  # Hủ Tiếu Cô Bảy
-            ["Bún thịt nướng", "Bánh cuốn"],  # Bún Thịt Nướng Ông Tám
-            ["Cơm tấm", "Bánh mì"],  # Cơm Tấm Cô Chín
-            ["Bánh xèo", "Bánh bèo"]   # Bánh Xèo Ông Mười
-        ]
+        # Tạo 3 mảng để kết hợp thành tên nhà hàng
+        xung_ho = ["Bác", "Cô", "Chú", "Ông", "Bà", "Chị"]
+        thu_tu = ["Moggu", "Qiqi", "Tều", "Sleo", "Anh", "Sleo", "Taku", "Quagmire", "Giffin", "Tèo", "Mèo"]
+        co_so = ["Nhà làm", "Cơ sở 1", "Cơ sở 2", "Cơ sở 3", "Cơ sở 4", "Cơ sở 5", "Cơ sở 6", "Cơ sở 7", "Cơ sở 8", "Cơ sở 9", "Cơ sở 10"]
+        
+        # Tạo danh sách tên nhà hàng bằng cách kết hợp
+        restaurant_names = []
+        for xh in xung_ho:
+            for tt in thu_tu:
+                for cs in co_so:
+                    restaurant_names.append(f"{xh} {tt} {cs}")
+        
+        # Đảm bảo có đủ 165 nhà hàng
+        if len(restaurant_names) < 165:
+            # Thêm các tên khác nếu cần
+            additional_names = [
+                "Quán ăn Cô Ba", "Lò nem chua Hoa Thánh", "Bánh mì Mèo Sáu", 
+                "Phở Cô Một", "Hủ tiếu Cô Bảy", "Bún bò Cô Ba",
+                "Cơm tấm Chú Chín", "Bánh xèo Cô Mười", "Bánh bèo Cô Tám",
+                "Bánh cuốn Cô Năm", "Bánh bột lọc Cô Sáu", "Bánh canh Cô Bảy",
+                "Bún thịt nướng Cô Tám", "Nem chua Chú Chín", "Bánh mì Cô Mười"
+            ]
+            restaurant_names.extend(additional_names)
+        
+        # Giới hạn đúng 165 nhà hàng
+        restaurant_names = restaurant_names[:165]
+        
+        # Định nghĩa chuyên môn cho từng nhà hàng (mỗi loại món được bán bởi nhiều nhà hàng)
+        restaurant_specialties = []
+        
+        # Bánh bèo (15 nhà hàng)
+        for i in range(15):
+            restaurant_specialties.append(["Bánh bèo"])
+        
+        # Nem chua (15 nhà hàng)
+        for i in range(15):
+            restaurant_specialties.append(["Nem chua"])
+        
+        # Bánh mì (15 nhà hàng)
+        for i in range(15):
+            restaurant_specialties.append(["Bánh mì"])
+        
+        # Phở (15 nhà hàng)
+        for i in range(15):
+            restaurant_specialties.append(["Phở"])
+        
+        # Hủ tiếu (15 nhà hàng)
+        for i in range(15):
+            restaurant_specialties.append(["Hủ tiếu"])
+        
+        # Bún bò (15 nhà hàng)
+        for i in range(15):
+            restaurant_specialties.append(["Bún bò"])
+        
+        # Cơm tấm (15 nhà hàng)
+        for i in range(15):
+            restaurant_specialties.append(["Cơm tấm"])
+        
+        # Bánh xèo (15 nhà hàng)
+        for i in range(15):
+            restaurant_specialties.append(["Bánh xèo"])
+        
+        # Bánh cuốn (15 nhà hàng)
+        for i in range(15):
+            restaurant_specialties.append(["Bánh cuốn"])
+        
+        # Bánh bột lọc (15 nhà hàng)
+        for i in range(15):
+            restaurant_specialties.append(["Bánh bột lọc"])
+        
+        # Bánh canh (15 nhà hàng)
+        for i in range(15):
+            restaurant_specialties.append(["Bánh canh"])
+        
+        # Bún thịt nướng (15 nhà hàng)
+        for i in range(15):
+            restaurant_specialties.append(["Bún thịt nướng"])
         
         for i, (name, specialties) in enumerate(zip(restaurant_names, restaurant_specialties)):
             # Random coordinates in HCMC area
@@ -149,11 +198,11 @@ def create_sample_data():
             lon = random.uniform(106.618361, 106.798821)
             
             restaurant = Restaurant(
-                name=name,
+                name=f"{specialties[0]} {name}",
                 address=f"Địa chỉ {i+1}, Quận {random.randint(1, 12)}, TP.HCM",
-                phone=f"090123456{i:02d}",
+                phone=f"090123456{i:03d}",
                 email=f"restaurant{i+1}@foodapp.com",
-                description=f"Quán {name} chuyên về {', '.join(specialties)}",
+                description=f"{name} chuyên về {', '.join(specialties)}",
                 image_url=random.choice([
                     "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4",
                     "https://images.unsplash.com/photo-1552566626-52f8b828add9",
@@ -161,10 +210,10 @@ def create_sample_data():
                 ]),
                 is_active=True,
                 opening_hours="07:00-22:00",
-                owner=users[i+1],  # Each restaurant gets its own owner
+                owner=users[i+1], 
                 latitude=lat,
                 longitude=lon,
-                tax_code=f"0123456789{i:02d}",
+                tax_code=f"0123456789{i:03d}",
                 approval_status="approved",
                 approval_date=datetime.now() - timedelta(days=random.randint(1, 30))
             )
@@ -173,76 +222,75 @@ def create_sample_data():
         
         db.session.commit()
         
-        print("Creating toppings...")
-        toppings = []
-        topping_data = [
-            {"name": "Tôm khô", "price": 5000},
-            {"name": "Mỡ hành", "price": 3000},
-            {"name": "Chả lụa", "price": 7000},
-            {"name": "Nước mắm", "price": 2000},
-            {"name": "Thêm thịt", "price": 10000},
-            {"name": "Thêm rau sống", "price": 5000},
-            {"name": "Thêm nước chấm", "price": 2000},
-            {"name": "Thêm tôm", "price": 15000},
-            {"name": "Thêm mực", "price": 20000},
-            {"name": "Thêm trứng cút", "price": 8000},
-            {"name": "Thêm bánh canh", "price": 10000},
-            {"name": "Thêm chả cá", "price": 12000},
-            {"name": "Thêm sườn", "price": 15000},
-            {"name": "Thêm chả trứng", "price": 10000},
-            {"name": "Rau thơm", "price": 5000}
-        ]
-        
-        for topping_info in topping_data:
-            topping = Topping(
-                name=topping_info["name"],
-                price=topping_info["price"]
-            )
-            db.session.add(topping)
-            toppings.append(topping)
-        
         print("Creating foods...")
         foods = []
         
-        # Map food names to their data
-        food_map = {food["name"]: food for food in food_data}
+        # Tạo mapping từ tên loại món sang data trong JSON
+        food_type_mapping = {
+            "Bánh bèo": 0,      # index trong food_data
+            "Bánh bột lọc": 1,
+            "Bánh canh": 2,
+            "Bánh cuốn": 3,
+            "Bánh mì": 4,
+            "Bánh xèo": 5,
+            "Bún thịt nướng": 6,
+            "Cơm tấm": 7,
+            "Hủ tiếu": 8,
+            "Nem chua": 9,
+            "Phở": 10
+        }
+        
+        # Tạo tất cả toppings từ data_food.json
+        print("Creating toppings from food data...")
+        all_toppings = {}  # Dictionary để tránh duplicate toppings
+        
+        for food_info in food_data:
+            for topping_info in food_info["topping"]:
+                topping_name = topping_info["name"]
+                if topping_name not in all_toppings:
+                    topping = Topping(
+                        name=topping_name,
+                        price=topping_info["price"]
+                    )
+                    db.session.add(topping)
+                    all_toppings[topping_name] = topping
+        
+        db.session.commit()
         
         for i, (restaurant, specialties) in enumerate(zip(restaurants, restaurant_specialties)):
             for specialty in specialties:
-                if specialty in food_map:
-                    food_info = food_map[specialty]
+                if specialty in food_type_mapping:
+                    food_index = food_type_mapping[specialty]
+                    food_info = food_data[food_index]
                     
-                    # Create food with restaurant-specific name
-                    food_name = f"{specialty} {restaurant.name}"
-                    price = random.choice(food_info["random_price"])
+                    # Lấy 3-5 món ngẫu nhiên từ danh sách names
+                    num_foods = random.randint(3, min(5, len(food_info["names"])))
+                    selected_names = random.sample(food_info["names"], num_foods)
                     
-                    food = Food(
-                        name=food_name,
-                        description=food_info["description"],
-                        price=price,
-                        image_url=random.choice(food_info["images"]),
-                        available=True,
-                        restaurant=restaurant
-                    )
-                    db.session.add(food)
-                    foods.append(food)
-                    
-                    # Add categories
-                    for cat_id in food_info["categories"]:
-                        if cat_id in categories:
-                            food.categories.append(categories[cat_id])
-                    
-                    # Add toppings
-                    for topping_info in food_info["topping"]:
-                        # Find matching topping or create new one
-                        matching_topping = None
-                        for topping in toppings:
-                            if topping.name == topping_info["name"]:
-                                matching_topping = topping
-                                break
+                    for j, food_name in enumerate(selected_names):
+                        price = random.choice(food_info["random_price"])
                         
-                        if matching_topping:
-                            food.toppings.append(matching_topping)
+                        food = Food(
+                            name=food_name,
+                            description=food_info["description"],
+                            price=price,
+                            image_url=random.choice(food_info["images"]),
+                            available=True,
+                            restaurant=restaurant
+                        )
+                        db.session.add(food)
+                        foods.append(food)
+                        
+                        # Add categories
+                        for cat_id in food_info["categories"]:
+                            if cat_id in categories:
+                                food.categories.append(categories[cat_id])
+                        
+                        # Add toppings từ food_info
+                        for topping_info in food_info["topping"]:
+                            topping_name = topping_info["name"]
+                            if topping_name in all_toppings:
+                                food.toppings.append(all_toppings[topping_name])
         
         print("Creating coupons...")
         coupons = []

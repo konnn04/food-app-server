@@ -2,7 +2,9 @@ from .base_user import BaseUser
 from .customer import Customer
 from .user import User
 from .food import Food
-from .order import Order, OrderItem, OrderItemTopping
+from .order import Order
+from .order_item import OrderItem
+from .order_item_topping import OrderItemTopping
 from .restaurant import Restaurant
 from .category import Category
 from .otp import OTP

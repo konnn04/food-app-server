@@ -61,11 +61,11 @@ def get_foods():
     available_only = request.args.get('available', 'true').lower() == 'true'
     return FoodController.get_foods(category, available_only)
 
-@food_bp.route('/<int:food_id>', methods=['GET'])
-@swag_from({'tags': ['Food'], 'summary': 'Get food by id'})
+@food_bp.route('/<int:food_id>/', methods=['GET'])
+@swag_from({'tags': ['Food'], 'summary': 'Get food detail with additional info'})
 def get_food(food_id):
-    """Lấy thông tin một món ăn"""
-    return FoodController.get_food(food_id)
+    """Lấy chi tiết món ăn với thông tin bổ sung"""
+    return FoodController.get_food_detail(food_id)
 
 @food_bp.route('/', methods=['POST'])
 @swag_from({'tags': ['Food'], 'summary': 'Create food', 'responses': {'201': {'description': 'Created'}}})
@@ -74,14 +74,14 @@ def create_food():
     data = request.get_json()
     return FoodController.create_food(data)
 
-@food_bp.route('/<int:food_id>', methods=['PUT'])
+@food_bp.route('/<int:food_id>/', methods=['PUT'])
 @swag_from({'tags': ['Food'], 'summary': 'Update food'})
 def update_food(food_id):
     """Cập nhật thông tin món ăn"""
     data = request.get_json()
     return FoodController.update_food(food_id, data)
 
-@food_bp.route('/<int:food_id>', methods=['DELETE'])
+@food_bp.route('/<int:food_id>/', methods=['DELETE'])
 @swag_from({'tags': ['Food'], 'summary': 'Delete food'})
 def delete_food(food_id):
     """Xóa món ăn"""

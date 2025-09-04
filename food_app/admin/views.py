@@ -6,7 +6,9 @@ from food_app import db
 from food_app.models.user import User
 from food_app.models.customer import Customer
 from food_app.models.food import Food
-from food_app.models.order import Order, OrderItem
+from food_app.models.order import Order
+from food_app.models.order_item import OrderItem
+from food_app.models.order_item_topping import OrderItemTopping
 from food_app.models.restaurant import Restaurant
 from food_app.models.category import Category
 from food_app.models.topping import Topping

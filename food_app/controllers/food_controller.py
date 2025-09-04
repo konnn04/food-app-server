@@ -1,6 +1,10 @@
 from food_app.dao import FoodDAO
 from food_app.utils.responses import success_response, error_response
-from food_app.utils.pagination import paginate_query
+from food_app.utils.pagination import paginate
+from food_app.models.food import Food
+from food_app.models.review import Review
+from food_app.models.order_item import OrderItem
+from sqlalchemy import func
 
 class FoodController:
     @staticmethod
@@ -9,8 +13,8 @@ class FoodController:
         try:
             from flask import request
             keyword = request.args.get('q')
-            page = request.args.get('page', 1)
-            per_page = request.args.get('per_page', 20)
+            page = request.args.get('page', type=int)
+            per_page = request.args.get('per_page', type=int)
             lat = request.args.get('lat')
             lon = request.args.get('lon')
             max_km = request.args.get('max_km')
@@ -22,7 +26,7 @@ class FoodController:
             lon = float(lon)
             near = (lat, lon)
             query = FoodDAO.get_foods(category, available_only, keyword, near, float(max_km) if max_km else None)
-            items, meta = paginate_query(query, page, per_page)
+            items, meta = paginate(query, page, per_page)
 
             # Compute distance (km) from provided/default location to restaurant location
             import math
@@ -64,6 +68,46 @@ class FoodController:
                 return error_response('Không tìm thấy món ăn', 404)
 
             return success_response('Lấy thông tin món ăn thành công', food.to_dict())
+
+        except Exception as e:
+            return error_response(f'Lỗi server: {str(e)}', 500)
+
+    @staticmethod
+    def get_food_detail(food_id):
+        """Lấy chi tiết món ăn với thông tin bổ sung"""
+        try:
+            food = Food.query.get(food_id)
+            if not food:
+                return error_response('Không tìm thấy món ăn', 404)
+
+            # Tính số lượng đã bán
+            sold_count = OrderItem.query.filter_by(food_id=food_id).with_entities(
+                func.sum(OrderItem.quantity)
+            ).scalar() or 0
+
+            # Tính đánh giá trung bình
+            avg_rating = Review.query.filter_by(food_id=food_id).with_entities(
+                func.avg(Review.rating)
+            ).scalar() or 0
+
+            # Đếm số đánh giá
+            review_count = Review.query.filter_by(food_id=food_id).count()
+
+            # Lấy đánh giá gần đây
+            recent_reviews = Review.query.filter_by(food_id=food_id)\
+                .order_by(Review.created_at.desc())\
+                .limit(5).all()
+
+            food_data = food.to_dict()
+            food_data.update({
+                'sold_count': sold_count,
+                'avg_rating': round(float(avg_rating), 1) if avg_rating else 0,
+                'review_count': review_count,
+                'recent_reviews': [review.to_dict() for review in recent_reviews],
+                'restaurant': food.restaurant.to_dict() if food.restaurant else None
+            })
+
+            return success_response('Lấy chi tiết món ăn thành công', food_data)
 
         except Exception as e:
             return error_response(f'Lỗi server: {str(e)}', 500)

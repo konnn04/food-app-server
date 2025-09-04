@@ -18,6 +18,7 @@ class Topping(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     foods = db.relationship('Food', secondary=food_toppings, back_populates='toppings')
+    order_item_toppings = db.relationship('OrderItemTopping', back_populates='topping', lazy=True)
 
     def to_dict(self):
         return {

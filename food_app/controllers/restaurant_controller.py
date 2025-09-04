@@ -3,7 +3,13 @@ from food_app.utils.responses import success_response, error_response
 from flask_jwt_extended import get_jwt_identity
 from food_app.models.restaurant_staff import restaurant_staff
 from food_app import db
-from food_app.utils.pagination import paginate_query
+from food_app.utils.pagination import paginate
+from food_app.models.restaurant import Restaurant
+from food_app.models.food import Food
+from food_app.models.review import Review
+from food_app.models.order import Order
+from sqlalchemy import func
+from food_app.models.order_item import OrderItem
 
 class RestaurantController:
     @staticmethod
@@ -66,15 +72,85 @@ class RestaurantController:
         try:
             from flask import request
             keyword = request.args.get('q')
-            page = request.args.get('page', 1)
-            per_page = request.args.get('per_page', 20)
+            page = request.args.get('page', type=int)
+            per_page = request.args.get('per_page', type=int)
             lat = request.args.get('lat')
             lon = request.args.get('lon')
             max_km = request.args.get('max_km')
             near = (float(lat), float(lon)) if lat and lon else None
             query = RestaurantDAO.list_restaurants(keyword, near, float(max_km) if max_km else None)
-            items, meta = paginate_query(query, page, per_page)
+            items, meta = paginate(query, page, per_page)
             return success_response('Lấy danh sách nhà hàng thành công', {'items': [r.to_dict() for r in items], 'meta': meta})
+        except Exception as e:
+            return error_response(f'Lỗi server: {str(e)}', 500)
+
+    @staticmethod
+    def get_restaurant_detail(restaurant_id):
+        """Lấy chi tiết nhà hàng với thông tin bổ sung"""
+        try:
+            restaurant = Restaurant.query.get(restaurant_id)
+            if not restaurant:
+                return error_response('Không tìm thấy nhà hàng', 404)
+
+            # Tính tổng doanh thu
+            total_revenue = Order.query.filter_by(
+                restaurant_id=restaurant_id, 
+                status='completed'
+            ).with_entities(
+                func.sum(Order.total_amount)
+            ).scalar() or 0
+
+            # Đếm số đơn hàng đã hoàn thành
+            completed_orders = Order.query.filter_by(
+                restaurant_id=restaurant_id, 
+                status='completed'
+            ).count()
+
+            # Tính đánh giá trung bình
+            avg_rating = Review.query.filter_by(restaurant_id=restaurant_id).with_entities(
+                func.avg(Review.rating)
+            ).scalar() or 0
+
+            # Đếm số đánh giá
+            review_count = Review.query.filter_by(restaurant_id=restaurant_id).count()
+
+            # Đếm số món ăn
+            food_count = Food.query.filter_by(restaurant_id=restaurant_id).count()
+
+            # Lấy đánh giá gần đây
+            recent_reviews = Review.query.filter_by(restaurant_id=restaurant_id)\
+                .order_by(Review.created_at.desc())\
+                .limit(5).all()
+
+            # Lấy món ăn nổi bật (bán chạy nhất)
+            top_foods = db.session.query(Food, func.sum(OrderItem.quantity).label('total_sold'))\
+                .join(OrderItem, Food.id == OrderItem.food_id)\
+                .filter(Food.restaurant_id == restaurant_id)\
+                .group_by(Food.id)\
+                .order_by(func.sum(OrderItem.quantity).desc())\
+                .limit(5).all()
+
+            restaurant_data = restaurant.to_dict()
+            restaurant_data.update({
+                'total_revenue': float(total_revenue),
+                'completed_orders': completed_orders,
+                'avg_rating': round(float(avg_rating), 1) if avg_rating else 0,
+                'review_count': review_count,
+                'food_count': food_count,
+                'recent_reviews': [review.to_dict() for review in recent_reviews],
+                'top_foods': [
+                    {
+                        'id': food.id,
+                        'name': food.name,
+                        'price': food.price,
+                        'image_url': food.image_url,
+                        'total_sold': total_sold
+                    } for food, total_sold in top_foods
+                ]
+            })
+
+            return success_response('Lấy chi tiết nhà hàng thành công', restaurant_data)
+
         except Exception as e:
             return error_response(f'Lỗi server: {str(e)}', 500)
 

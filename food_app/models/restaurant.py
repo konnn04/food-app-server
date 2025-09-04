@@ -33,8 +33,9 @@ class Restaurant(db.Model):
     foods = db.relationship('Food', back_populates='restaurant', lazy=True)
     orders = db.relationship('Order', back_populates='restaurant', lazy=True)
 
-    def to_dict(self):
-        return {
+    def to_dict(self, include_sensitive=False):
+        """Convert to dict, optionally including sensitive information"""
+        data = {
             'id': self.id,
             'name': self.name,
             'address': self.address,
@@ -46,14 +47,20 @@ class Restaurant(db.Model):
             'opening_hours': self.opening_hours,
             'latitude': self.latitude,
             'longitude': self.longitude,
-            'tax_code': self.tax_code,
-            'approval_status': self.approval_status,
-            'approval_date': self.approval_date.isoformat() if self.approval_date else None,
-            'rejection_reason': self.rejection_reason,
-            'owner_id': self.owner_id,
-            'owner_name': self.owner.full_name if self.owner else None,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
+        
+        if include_sensitive:
+            data.update({
+                'tax_code': self.tax_code,
+                'approval_status': self.approval_status,
+                'approval_date': self.approval_date.isoformat() if self.approval_date else None,
+                'rejection_reason': self.rejection_reason,
+                'owner_id': self.owner_id,
+                'owner_name': self.owner.full_name if self.owner else None
+            })
+        
+        return data
     
     def can_be_approved(self):
         """Kiểm tra restaurant có đủ điều kiện phê duyệt không"""
@@ -83,5 +90,45 @@ class Restaurant(db.Model):
     def get_staff_count(self):
         """Đếm số lượng staff/manager"""
         return len([user for user in self.staff_users if user.role in ['staff', 'manager']])
+    
+    def is_open_now(self):
+        """Kiểm tra nhà hàng có đang mở cửa không"""
+        if not self.opening_hours:
+            return True  # Nếu không có giờ mở cửa thì mặc định mở
+        
+        from datetime import datetime
+        now = datetime.now()
+        current_time = now.strftime('%H:%M')
+        current_day = now.strftime('%A').lower()
+        
+        # Chuyển đổi tên ngày sang tiếng Việt
+        day_mapping = {
+            'monday': 'thứ 2',
+            'tuesday': 'thứ 3', 
+            'wednesday': 'thứ 4',
+            'thursday': 'thứ 5',
+            'friday': 'thứ 6',
+            'saturday': 'thứ 7',
+            'sunday': 'chủ nhật'
+        }
+        
+        current_day_vn = day_mapping.get(current_day, current_day)
+        
+        # Kiểm tra trong opening_hours
+        if isinstance(self.opening_hours, dict):
+            day_schedule = self.opening_hours.get(current_day_vn)
+            if day_schedule:
+                if isinstance(day_schedule, str):
+                    # Format: "08:00-22:00"
+                    if '-' in day_schedule:
+                        start_time, end_time = day_schedule.split('-')
+                        return start_time <= current_time <= end_time
+                elif isinstance(day_schedule, dict):
+                    # Format: {"open": "08:00", "close": "22:00"}
+                    open_time = day_schedule.get('open', '00:00')
+                    close_time = day_schedule.get('close', '23:59')
+                    return open_time <= current_time <= close_time
+        
+        return True  # Mặc định mở nếu không có thông tin
     
     # Invitation feature removed
