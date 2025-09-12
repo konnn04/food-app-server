@@ -16,8 +16,10 @@ class BaseUser(db.Model):
     address = db.Column(db.Text, nullable=True, default='')
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     last_login = db.Column(db.DateTime)
-    is_need_update = db.Column(db.Boolean, default=False)
+    is_need_update = db.Column(db.Boolean, default=True)
+    balance = db.Column(db.Float, default=0.0)
     
     # Discriminator column for inheritance
     user_type = db.Column(db.String(20), nullable=False)
@@ -40,7 +42,9 @@ class BaseUser(db.Model):
             'address': self.address,
             'is_active': self.is_active,
             'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'last_login': self.last_login.isoformat() if self.last_login else None,
             'user_type': self.user_type,
-            'is_need_update': self.is_need_update
+            'is_need_update': self.is_need_update,
+            'balance': self.balance,
         }

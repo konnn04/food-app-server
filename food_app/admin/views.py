@@ -34,7 +34,7 @@ class AdminAuthView(BaseView):
         if request.method == 'POST':
             username = request.form.get('username')
             password = request.form.get('password')
-            next_url = request.args.get('next') or url_for('admin_dashboard.index')
+            next_url = request.args.get('next') or url_for('admin_index.index')
             user = User.query.filter((User.username == username) | (User.email == username)).first()
             if user and user.role == 'admin' and user.check_password(password):
                 login_user(user)
@@ -50,17 +50,13 @@ class AdminAuthView(BaseView):
 class BaseSafeModelView(AdminRequiredMixin, ModelView):
     def handle_view_exception(self, exc):
         flash(str(exc), 'danger')
-        return redirect(url_for('admin_dashboard.index'))
+        return redirect(url_for('admin_index.index'))
 
 class UserModelView(BaseSafeModelView):
-    column_list = ('id', 'username', 'email', 'phone', 'first_name', 'last_name', 'role', 'is_active', 'restaurants')
+    column_list = ('id', 'username', 'email', 'phone', 'first_name', 'last_name', 'role', 'is_active', 'restaurant_id')
     column_searchable_list = ('username', 'email', 'phone', 'first_name', 'last_name')
     column_filters = ()
     form_excluded_columns = ('password_hash',)
-
-    column_formatters = {
-        'restaurants': lambda v, c, m, p: ', '.join([r.name for r in getattr(m, 'restaurants', [])])
-    }
 
     def on_model_change(self, form, model, is_created):
         if is_created:

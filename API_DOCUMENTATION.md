@@ -1,562 +1,381 @@
-# Food Ordering System API Documentation
+# Tài liệu API Hệ thống Đặt món (tổng hợp từ @routes @controllers @dao @models)
 
 ## Base URL
 ```
 http://127.0.0.1:5000
 ```
 
-## Authentication
-- **Customer**: OTP-based authentication
-- **Staff/Admin**: JWT token authentication
-- **Headers**: `Authorization: Bearer <token>` (for protected endpoints)
+## Xác thực & Headers
+- Khách hàng: OTP → JWT (access, refresh)
+- Nhân viên/Chủ/Admin: username/password → JWT
+- Header: `Authorization: Bearer <access_token>` cho endpoint cần bảo vệ
+- Mẫu phản hồi chung: `{ success: boolean, message: string, data?: any }`
 
 ---
 
-## 🔍 Search Endpoints
+## 🔍 Tìm kiếm
 
-### Search Food and Restaurants
-```
-GET /api/search/
-```
-**Description**: Primary search endpoint for finding restaurants and food items
-
-**Query Parameters**:
-- `q` (string): Search keyword for food or restaurant name
-- `lat` (float): Current latitude
-- `lon` (float): Current longitude  
-- `min_price` (float): Minimum price filter
-- `max_price` (float): Maximum price filter
-- `sort_by` (string): Sort by "distance" or "price"
-- `sort_order` (string): Sort order "asc" or "desc"
-- `page` (integer): Page number
-- `per_page` (integer): Items per page
-
-**Response**: List of restaurants with up to 3 related food items per restaurant
+### GET /api/search/
+- Query: `q`, `lat`, `lon`, `min_price`, `max_price`, `sort_by` (distance|price), `sort_order` (asc|desc), `page`, `per_page`
+- Response.data:
+  - `items`: [
+    restaurant.to_dict(include_sensitive=false) + `distance_km` + `searched_foods` (id, name, description, price, image_url, available)
+  ]
+  - `pagination`: { page, per_page, total, pages }
 
 ---
 
-## 🍽️ Food Endpoints
+## 🍽️ Món ăn (Food)
 
-### List Foods
-```
-GET /api/food/
-```
-**Description**: Get list of food items with filtering and pagination
+### GET /api/food/
+- Query: `category`, `available` (default true), `q`, `page`, `per_page`, `lat` (default 10.754792), `lon` (default 106.6952276), `max_km`, `seed_random`
+- Response.data:
+  - `items`: food.to_dict() mở rộng `distance_km` và `restaurant.distance_km` (nếu có)
+  - `meta`: thông tin phân trang
 
-**Query Parameters**:
-- `category` (integer): Filter by category ID
-- `available` (boolean): Filter by availability
-- `q` (string): Search keyword
-- `page` (integer): Page number
-- `per_page` (integer): Items per page
-- `lat` (float): Current latitude (default: 10.754792)
-- `lon` (float): Current longitude (default: 106.6952276)
-- `max_km` (float): Maximum distance in kilometers
+### GET /api/food/{food_id}/
+- Response.data: nếu có chi tiết mở rộng: `food.to_dict()` + `sold_count`, `avg_rating`, `review_count`, `recent_reviews` (tối đa 5), `restaurant`
 
-### Get Food Detail
-```
-GET /api/food/{food_id}/
-```
-**Description**: Get detailed food information with statistics
+### POST /api/food/
+- Body: { name (required), price (required), description?, category?, image_url?, available?=true, restaurant_id? }
+- Response: 201, `food.to_dict()`
 
-### Create Food (Staff)
-```
-POST /api/food/
-```
-**Description**: Create new food item (Staff only)
+### PUT /api/food/{food_id}/
+- Body: { name?, description?, price?, category?, image_url?, available? }
+- Response: `updated_food.to_dict()`
 
-### Update Food (Staff)
-```
-PUT /api/food/{food_id}/
-```
-**Description**: Update food information (Staff only)
-
-### Delete Food (Staff)
-```
-DELETE /api/food/{food_id}/
-```
-**Description**: Delete food item (Staff only)
+### DELETE /api/food/{food_id}/
+- Response: message thành công
 
 ---
 
-## 🏪 Restaurant Endpoints
+## 🏷️ Danh mục (Category)
 
-### List Restaurants (Public)
-```
-GET /api/restaurant/public
-```
-**Description**: Public list of restaurants with pagination and geo filtering
-
-**Query Parameters**:
-- `q` (string): Search keyword
-- `page` (integer): Page number
-- `per_page` (integer): Items per page
-- `lat` (float): Current latitude
-- `lon` (float): Current longitude
-- `max_km` (float): Maximum distance in kilometers
-
-### Get Restaurant Detail
-```
-GET /api/restaurant/{restaurant_id}/detail
-```
-**Description**: Get detailed restaurant information with statistics
+### GET /api/category/
+- Response.data: [{ id, name, description }]
 
 ---
 
-## 👤 Customer Endpoints
+## 🏪 Nhà hàng (Restaurant)
 
-### Cart Management
+### GET /api/restaurant/public
+- Query: `q`, `page`, `per_page`, `lat`, `lon`, `max_km`
+- Response.data: { items: restaurant.to_dict()[], meta }
 
-#### Get Cart
-```
-GET /api/customer/cart/
-```
-**Description**: Get customer's cart items
-
-#### Add to Cart
-```
-POST /api/customer/cart/add/
-```
-**Description**: Add food item to cart
-
-#### Update Cart Item
-```
-PUT /api/customer/cart/update/{item_id}/
-```
-**Description**: Update quantity of cart item
-
-#### Remove Cart Item
-```
-DELETE /api/customer/cart/remove/{item_id}/
-```
-**Description**: Remove item from cart
-
-#### Clear Cart
-```
-DELETE /api/customer/cart/clear/
-```
-**Description**: Clear entire cart
-
-### Order Management
-
-#### List Orders
-```
-GET /api/customer/orders/
-```
-**Description**: Get customer's order history
-
-#### Create Order
-```
-POST /api/customer/orders/
-```
-**Description**: Place new order from cart
-
-#### Get Order Detail
-```
-GET /api/customer/orders/{order_id}/
-```
-**Description**: Get detailed order information
-
-#### Cancel Order
-```
-PUT /api/customer/orders/{order_id}/cancel/
-```
-**Description**: Cancel existing order
-
-### Payment (Mockup)
-
-#### Deposit Money
-```
-POST /api/customer/payment/deposit/
-```
-**Description**: Deposit money to account (mockup)
-
-#### Withdraw Money
-```
-POST /api/customer/payment/withdraw/
-```
-**Description**: Withdraw money from account (mockup)
-
-### Profile Management
-
-#### Get Profile
-```
-GET /api/customer/profile/
-```
-**Description**: Get customer profile information
-
-#### Update Profile
-```
-PUT /api/customer/profile/
-```
-**Description**: Update customer profile
-
-### Reviews
-
-#### List Reviews
-```
-GET /api/customer/reviews/
-```
-**Description**: Get reviews for food items
-
-#### Create Review
-```
-POST /api/customer/reviews/
-```
-**Description**: Create new review for food item (requires purchase verification)
+### GET /api/restaurant/{restaurant_id}/detail
+- Response.data: restaurant.to_dict() + thống kê: `total_revenue`, `completed_orders`, `avg_rating`, `review_count`, `food_count`, `recent_reviews` (5), `top_foods` (id, name, price, image_url, total_sold)
 
 ---
 
-## 👨‍💼 Staff Endpoints
+## 🎟️ Mã giảm giá (Coupon)
 
-### Food Management
+### POST /api/coupon/
+- Body: tối thiểu `code`, `discount_type` (percent|fixed); các trường khác theo model Coupon
+- Response: 201, coupon.to_dict()
 
-#### List Restaurant Foods
-```
-GET /api/staff/foods/
-```
-**Description**: Get list of foods for staff's restaurant
+### POST /api/coupon/apply
+- Body: { code (string), order_amount (number), restaurant_id? (int), food_ids? (int[]) }
+- Response.data: { coupon: coupon.to_dict(), discount: number, payable: number }
 
-#### Get Food Detail
-```
-GET /api/staff/foods/{food_id}/
-```
-**Description**: Get detailed food information
+### GET /api/coupon/
+- Query: `restaurant_id` (optional)
+- Response.data: coupon.to_dict()[] đang active
 
-#### Create Food
-```
-POST /api/staff/foods/
-```
-**Description**: Create new food item
+### GET /api/coupon/code/{code}
+- Response.data: coupon.to_dict()
 
-#### Update Food
-```
-PUT /api/staff/foods/{food_id}/
-```
-**Description**: Update food information
+### GET /api/coupon/restaurant/{restaurant_id} (staff)
+- Response.data: coupon.to_dict()[] theo nhà hàng
 
-#### Delete Food
-```
-DELETE /api/staff/foods/{food_id}/
-```
-**Description**: Delete food item
+### POST /api/coupon/restaurant/{restaurant_id} (staff)
+- Body: dữ liệu coupon; server gán `restaurant_id`
+- Response: 201, coupon.to_dict()
 
-#### Toggle Food Availability
-```
-PUT /api/staff/foods/{food_id}/toggle/
-```
-**Description**: Enable/disable food item
+### PUT /api/coupon/{coupon_id} (staff)
+- Body: trường cập nhật
+- Response: coupon.to_dict()
 
-### Restaurant Management
-
-#### Get Restaurant Info
-```
-GET /api/staff/restaurant/
-```
-**Description**: Get restaurant information
-
-#### Update Restaurant Info
-```
-PUT /api/staff/restaurant/
-```
-**Description**: Update restaurant information
-
-#### Update Opening Hours
-```
-PUT /api/staff/restaurant/hours/
-```
-**Description**: Update restaurant opening hours
-
-#### Toggle Restaurant Status
-```
-PUT /api/staff/restaurant/toggle/
-```
-**Description**: Enable/disable restaurant
-
-### Order Management
-
-#### List Restaurant Orders
-```
-GET /api/staff/orders/
-```
-**Description**: Get orders for staff's restaurant
-
-**Query Parameters**:
-- `status` (string): Filter by order status
-
-#### Get Order Detail
-```
-GET /api/staff/orders/{order_id}/
-```
-**Description**: Get detailed order information
-
-#### Accept Order
-```
-PUT /api/staff/orders/{order_id}/accept/
-```
-**Description**: Accept incoming order
-
-#### Complete Order
-```
-PUT /api/staff/orders/{order_id}/complete/
-```
-**Description**: Mark order as completed
-
-#### Cancel Order
-```
-PUT /api/staff/orders/{order_id}/cancel/
-```
-**Description**: Cancel order with reason
-
-### Reviews
-
-#### List Restaurant Reviews
-```
-GET /api/staff/reviews/
-```
-**Description**: Get reviews for staff's restaurant
-
-### Revenue
-
-#### Get Revenue Statistics
-```
-GET /api/staff/revenue/
-```
-**Description**: Get revenue statistics
-
-**Query Parameters**:
-- `start_date` (string): Start date for statistics
-- `end_date` (string): End date for statistics
-
-### Profile Management
-
-#### Get Staff Profile
-```
-GET /api/staff/profile/
-```
-**Description**: Get staff profile information
-
-#### Update Staff Profile
-```
-PUT /api/staff/profile/
-```
-**Description**: Update staff profile
-
-### Payment (Mockup)
-
-#### Deposit Money
-```
-POST /api/staff/payment/deposit/
-```
-**Description**: Deposit money to account (mockup)
-
-#### Withdraw Money
-```
-POST /api/staff/payment/withdraw/
-```
-**Description**: Withdraw money from account (mockup)
+### DELETE /api/coupon/{coupon_id} (staff)
+- Response: message
 
 ---
 
-## 🔐 Authentication Endpoints
+## 👤 Khách hàng (Customer)
 
-### Customer Authentication
+### GET /api/customer/profile/
+- JWT customer
+- Response.data: customer.to_dict()
 
-#### Send OTP
-```
-POST /api/auth/customer/send-otp/
-```
-**Description**: Send OTP to customer phone number
+### PUT /api/customer/profile/
+- Body: { full_name?, phone?, email?, address? }
+- Response: message
 
-**Request Body**:
+### GET /api/customer/cart/
+- Response.data: cấu trúc từ `CartDAO.get_cart_with_items_and_data(customer_id)`
+
+### POST /api/customer/cart/add/
+- Body: { food_id (required), quantity?=1, topping_ids? int[] }
+- Response: message
+
+### PUT /api/customer/cart/update/{item_id}/
+- Body: { quantity >= 1 }
+- Response: message
+
+### DELETE /api/customer/cart/remove/{item_id}/
+### DELETE /api/customer/cart/clear/
+- Response: message
+
+### GET /api/customer/orders/
+- Query: `page`, `per_page`
+- Response.data: { items: order.to_dict()[], pagination }
+
+### GET /api/customer/orders/{order_id}/
+- Response.data: order.to_dict()
+
+### POST /api/customer/orders/
+- Body: { delivery_address, delivery_phone, delivery_note?/note?, coupon_code? } (items lấy từ cart)
+- Server sẽ tự kiểm tra và áp dụng mã giảm giá (nếu có): hiệu lực thời gian, ràng buộc nhà hàng, món áp dụng, giá trị tối thiểu, mức giảm tối đa. Tổng tiền được trừ trực tiếp trước khi lưu đơn.
+- Response.data: order.to_dict() kèm, nếu có, `coupon_applied: { code, discount_amount }`
+
+### PUT /api/customer/orders/{order_id}/cancel/
+- Body: { reason }
+- Response: message
+
+### GET /api/customer/reviews/
+- Query: `restaurant_id`?, `page`?, `per_page`?
+- Response.data: { items: review.to_dict()[], pagination }
+
+### POST /api/customer/reviews/
+- JWT customer; Body: { food_id, rating (1..5), comment? }
+- Điều kiện: đã mua món, chưa review
+- Response: message
+
+### POST /api/customer/payment/deposit/ (mock)
+### POST /api/customer/payment/withdraw/ (mock)
+- Body: { amount > 0 }
+- Response.data: { new_balance }
+
+---
+
+## 👨‍💼 Nhân viên/Chủ (Staff)
+
+Yêu cầu JWT + thuộc nhà hàng tương ứng.
+
+### GET /api/staff/foods/
+- Query: `page`, `per_page`
+- Response.data: { items: food.to_dict()[], pagination }
+
+### GET /api/staff/foods/{food_id}/
+- Response.data: food.to_dict()
+
+### POST /api/staff/foods/
+### PUT /api/staff/foods/{food_id}/
+### DELETE /api/staff/foods/{food_id}/
+### PUT /api/staff/foods/{food_id}/toggle/
+- Body (POST/PUT): { name, price, description?, image_url?, available? }
+- Response: message hoặc food.to_dict()
+
+### GET /api/staff/restaurant/
+### PUT /api/staff/restaurant/
+### PUT /api/staff/restaurant/hours/
+### PUT /api/staff/restaurant/toggle/
+- Body update: { name?, description?, phone?, email?, address?, image_url? } hoặc { opening_hours }
+- Response: message hoặc restaurant.to_dict()
+
+### GET /api/staff/orders/
+- Query: `status`?; phân trang `page`, `per_page`
+- Response.data: { items: order.to_dict()[], pagination }
+
+### GET /api/staff/orders/{order_id}/
+### PUT /api/staff/orders/{order_id}/accept/
+### PUT /api/staff/orders/{order_id}/done/
+### PUT /api/staff/orders/{order_id}/complete/
+### PUT /api/staff/orders/{order_id}/cancel/
+- Body cancel: { reason }
+- Response: message hoặc order.to_dict()
+
+### GET /api/staff/reviews/
+- Response.data: { items: review.to_dict()[], pagination }
+
+### GET /api/staff/revenue/
+- Query: `start_date` (YYYY-MM-DD, default 30 ngày), `end_date` (YYYY-MM-DD, default hôm nay)
+- Response.data: { total_revenue, order_count, period {start_date,end_date}, daily_revenue: [{ date, revenue, orders }] }
+
+### GET /api/staff/profile/
+### PUT /api/staff/profile/
+- Body update: { full_name?, phone?, email?, address? }
+- Response: message hoặc user.to_dict()
+
+### POST /api/staff/payment/deposit/ (mock)
+### POST /api/staff/payment/withdraw/ (mock)
+
+---
+
+## 🔐 Xác thực (Auth)
+
+### POST /api/auth/staff/login/
+- Body: { username, password }
+- Response.data: { user: user.to_dict(), tokens }
+
+### POST /api/auth/staff/register/
+- Body bắt buộc: { first_name, last_name, phone, email, address, password, username, gender }
+- Response: 201, user.to_dict() + { next_step: 'create_restaurant' }
+
+### POST /api/auth/customer/send-otp/
+- Body: { phone }
+- Response.data: { otp }
+
+### POST /api/auth/customer/verify-otp/
+- Body: { phone, otp_code }
+- Response.data: { customer: customer.to_dict(), tokens, is_new }
+
+### POST /api/auth/refresh/
+- Response.data: { access_token, token_type: 'Bearer' }
+
+### GET /api/auth/profile/
+### PUT /api/auth/profile/
+- Body update: { first_name?, last_name?, address?, email?, gender?, date_of_birth?(YYYY-MM-DD) }
+- Response: profile đã cập nhật
+
+---
+
+## 👨‍💻 Admin
+
+### GET /api/admin/dashboard/
+### GET /api/admin/users/ (role?)
+### GET /api/admin/customers/
+### GET /api/admin/orders/ (status?)
+- Yêu cầu JWT + quyền admin
+- Response.data: tuỳ theo controller (các bản ghi `to_dict()`)
+
+---
+
+## 🧾 Hoá đơn (Invoice)
+
+### POST /api/invoice/
+- Body bắt buộc: { order_id, payment_method, subtotal, tax, total }
+- Response: 201, invoice.to_dict()
+
+### GET /api/invoice/order/{order_id}/
+- Response.data: invoice.to_dict()
+
+---
+
+## 🧾 Đơn hàng (Order public)
+
+### POST /api/order/
+- Body: { customer_id, items: [{ food_id, quantity, price? }], delivery_address?, delivery_phone?, notes? }
+- Response: 201, order.to_dict()
+
+### GET /api/order/{order_id}/
+### GET /api/order/customer/{customer_id}/
+### GET /api/order/restaurant/{restaurant_id}/
+- Response.data: order.to_dict() hoặc danh sách
+
+### PUT /api/order/{order_id}/status/
+- Body: { status in [pending, confirmed, preparing, ready, delivering, delivered, cancelled] }
+- Response.data: order.to_dict()
+
+### POST /api/order/{order_id}/cancel/
+- Body: { cancel_reason_id?, cancel_note? }
+- Response.data: order.to_dict()
+
+### PUT /api/order/{order_id}/assign-staff/{staff_id}/
+- Response: message + order.to_dict()
+
+---
+
+## 💳 Thanh toán VNPay
+
+### POST /api/payment/deposit/create/
+- JWT base user
+- Body: { amount > 0 }
+- Response.data: { payment_url, order_id }
+
+### GET /api/payment/vnpay/return/
+- Response.data: { valid_signature, params, credited_by_return? }
+
+### GET|POST /api/payment/vnpay/ipn/
+- Trả về: { RspCode, Message }
+
+### GET /api/payment/wallet/balance/
+- JWT base user
+- Response.data: { balance }
+
+### POST /api/payment/order/pay/
+- JWT customer; Body: { order_id }
+- Response.data: nếu đủ ví: `{ paid_by_wallet, order_status: 'paid' }`; nếu không đủ: `{ payment_url, order_id, amount_wallet: 0, amount_vnpay }`
+
+---
+
+## 🔁 Luồng nghiệp vụ Đơn hàng & Thanh toán
+
+- `pending`: khách tạo đơn (chưa thanh toán). Nhà hàng chưa nhìn thấy trong danh sách cần nhận.
+- `paid`: khách thanh toán xong (wallet hoặc VNPay). Đơn chuyển cho nhà hàng, có thể bấm "accept".
+- `accepted`: nhà hàng nhận đơn và chuẩn bị món. Tiền được ghi nhận cho owner.
+- `done`: bếp đã xong, bàn giao vận chuyển.
+- `completed`: giao hàng xong, khách đã nhận.
+- `cancelled`: huỷ đơn; hoàn tiền nếu đã thanh toán.
+
+Các API liên quan:
+- Thanh toán: `POST /api/payment/order/pay/` (đủ ví → set `status=paid`; thiếu ví → tạo VNPay)
+- Nhà hàng nhận đơn: `PUT /api/staff/orders/{order_id}/accept/` (chỉ khi `status=paid`)
+- Đánh dấu xong món: `PUT /api/staff/orders/{order_id}/done/` (khi `status=accepted`)
+- Hoàn tất: `PUT /api/staff/orders/{order_id}/complete/` (khi `status=done`)
+
+---
+
+## ⭐ Review công khai
+
+### POST /api/review/
+- Body: { customer_id, rating (1..5), ... }
+- Response: 201, review.to_dict()
+
+### GET /api/review/restaurant/{restaurant_id}/
+### GET /api/review/food/{food_id}/
+- Response.data: review.to_dict()[]
+
+---
+
+## 📦 Tóm tắt model (chính)
+- Food: id, name, description, price, image_url, available, restaurant_id, created_at
+- Restaurant: id, name, address, phone, email, description, image_url, latitude, longitude, is_active, opening_hours
+- Order: id, customer_id, restaurant_id, total_amount, status, created_at, accepted_at?, completed_at?, cancelled_at?, cancel_reason?, notes
+- OrderItem: id, order_id, food_id, quantity, price
+- Review: id, customer_id, food_id, restaurant_id, rating, comment, created_at
+- Coupon: id, code, discount_type, discount_value, max_discount_amount?, min_order_amount?, start_date?, end_date?, is_active, restaurant_id?, foods?
+- Customer: id, phone, full_name?, email?, address?, balance?, total_orders, loyalty_points
+- User: id, username, role, first_name, last_name, phone, email, address, balance?
+
+---
+
+## Mẫu phản hồi
+
+### Thành công
 ```json
-{
-  "phone": "string"
-}
+{ "success": true, "message": "...", "data": {} }
 ```
 
-#### Verify OTP
-```
-POST /api/auth/customer/verify-otp/
-```
-**Description**: Verify OTP and login customer
-
-**Request Body**:
+### Lỗi
 ```json
-{
-  "phone": "string",
-  "otp": "string"
-}
+{ "success": false, "message": "..." }
 ```
 
-### Staff/Admin Authentication
-
-#### Staff Login
-```
-POST /api/auth/staff/login/
-```
-**Description**: Staff/admin login with username and password
-
-**Request Body**:
+### Phân trang
 ```json
-{
-  "username": "string",
-  "password": "string"
-}
-```
-
-#### Create Owner Account
-```
-POST /api/auth/staff/register/
-```
-**Description**: Create new owner/staff account
-
-**Request Body**:
-```json
-{
-  "username": "string",
-  "password": "string",
-  "full_name": "string",
-  "email": "string",
-  "phone": "string"
-}
-```
-
-#### Refresh Token
-```
-POST /api/auth/refresh/
-```
-**Description**: Refresh access token using refresh token
-
----
-
-## 👨‍💻 Admin Endpoints
-
-### Dashboard
-```
-GET /api/admin/dashboard/
-```
-**Description**: Get overview data for admin dashboard
-
-### User Management
-```
-GET /api/admin/users/
-```
-**Description**: Get list of all users
-
-### Customer Management
-```
-GET /api/admin/customers/
-```
-**Description**: Get list of all customers
-
-### Order Management
-```
-GET /api/admin/orders/
-```
-**Description**: Get all orders across all restaurants
-
----
-
-## 📊 Response Format
-
-### Success Response
-```json
-{
-  "success": true,
-  "message": "Operation successful",
-  "data": {
-    // Response data
-  }
-}
-```
-
-### Error Response
-```json
-{
-  "success": false,
-  "message": "Error description",
-  "error": "Error code"
-}
-```
-
-### Paginated Response
-```json
-{
-  "success": true,
-  "message": "Data retrieved successfully",
-  "data": {
-    "items": [...],
-    "page": 1,
-    "per_page": 10,
-    "total": 100,
-    "pages": 10
-  }
-}
+{ "success": true, "message": "...", "data": { "items": [], "pagination": { "page": 1, "per_page": 10, "total": 100, "pages": 10 } } }
 ```
 
 ---
 
-## 🔧 Special Features
+## Khởi chạy nhanh
+```bash
+pip install -r requirements.txt
+python init_data.py
+python server.py
+```
+Swagger:
+- http://127.0.0.1:5000/apidocs/
+- http://127.0.0.1:5000/apispec_1.json
 
-### Order Logic
-- **Opening Hours Check**: Orders cannot be placed when restaurant is closed
-- **Food Availability**: Orders cannot include unavailable food items
-- **Distance Calculation**: Uses Haversine formula for accurate distance calculation
-- **Order Status Flow**: `pending` → `accepted` → `completed` or `cancelled`
 
-### Review System
-- **Food-based Reviews**: Reviews are tied to specific food items
-- **Purchase Verification**: Customers must have purchased the food item before reviewing
-- **Duplicate Prevention**: One review per food item per customer
-
-### Payment System (Mockup)
-- **Balance Management**: Track customer and staff balances
-- **Deposit/Withdraw**: Simulate money transactions
-- **Order Payment**: Deduct from balance when placing orders
-
-### Search Features
-- **Keyword Search**: Search by food name or restaurant name
-- **Location-based**: Sort by distance from current coordinates
-- **Price Filtering**: Filter by price range
-- **Restaurant Grouping**: Group food items by restaurant
-
-### Data Protection
-- **Sensitive Data**: Tax codes and internal data hidden from public endpoints
-- **Role-based Access**: Different endpoints for different user roles
-- **JWT Security**: Secure token-based authentication
-
----
-
-## 🚀 Getting Started
-
-1. **Install Dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. **Initialize Database**:
-   ```bash
-   python init_data.py
-   ```
-
-3. **Run Server**:
-   ```bash
-   python server.py
-   ```
-
-4. **Access API Documentation**:
-   - Swagger UI: `http://127.0.0.1:5000/apidocs/`
-   - API Spec: `http://127.0.0.1:5000/apispec_1.json`
-
----
-
-## 📝 Notes for Frontend Development
-
-- All timestamps are in ISO format
-- Coordinates use decimal degrees (latitude, longitude)
-- Prices are in the base currency unit
-- File uploads support: PNG, JPG, JPEG, GIF, WEBP (max 16MB)
-- Pagination defaults: page=1, per_page=10
-- Maximum delivery distance: 20km
-- Rating scale: 1-5 stars

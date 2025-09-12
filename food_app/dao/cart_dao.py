@@ -11,9 +11,18 @@ class CartDAO:
             cart = Cart(customer_id=customer_id, restaurant_id=restaurant_id)
             db.session.add(cart)
             db.session.commit()
-        elif restaurant_id and cart.restaurant_id != restaurant_id:
-            cart.restaurant_id = restaurant_id
-            db.session.commit()
+        elif restaurant_id:
+            # Enforce one restaurant per cart
+            if cart.restaurant_id is None:
+                cart.restaurant_id = restaurant_id
+                db.session.commit()
+            elif cart.restaurant_id != restaurant_id:
+                # If cart has items, do not allow switching restaurant
+                if cart.items and len(cart.items) > 0:
+                    raise ValueError('Giỏ hàng chỉ được chứa món từ một nhà hàng. Vui lòng xóa giỏ hàng trước khi chọn nhà hàng khác.')
+                # If empty, allow updating restaurant
+                cart.restaurant_id = restaurant_id
+                db.session.commit()
         return cart
 
     @staticmethod
@@ -21,6 +30,11 @@ class CartDAO:
         food = Food.query.get(food_id)
         if not food:
             raise ValueError('Món ăn không tồn tại')
+        # Ensure cart restaurant consistency
+        if cart.restaurant_id is None:
+            cart.restaurant_id = food.restaurant_id
+        elif cart.restaurant_id != food.restaurant_id:
+            raise ValueError('Giỏ hàng chỉ được chứa món từ một nhà hàng. Vui lòng xóa giỏ hàng trước khi thêm món từ nhà hàng khác.')
         item = CartItem(cart_id=cart.id, food_id=food_id, quantity=quantity, price=price or food.price)
         db.session.add(item)
         db.session.flush()
@@ -37,9 +51,52 @@ class CartDAO:
         return item
 
     @staticmethod
-    def clear_cart(cart):
+    def get_cart_with_items_and_data(customer_id):
+        """Return cart structure with nested items and toppings for a customer."""
+        cart = CartDAO.get_or_create_cart(customer_id)
+        items = [i.to_dict() for i in cart.items]
+        return {
+            'id': cart.id,
+            'customer_id': cart.customer_id,
+            'restaurant_id': cart.restaurant_id,
+            'restaurant_name': cart.restaurant.name if cart.restaurant else None,
+            'items': items
+        }
+
+    @staticmethod
+    def update_item_quantity(item_id, customer_id, quantity):
+        """Update quantity of a cart item that belongs to the customer's cart."""
+        item = CartItem.query.join(Cart, CartItem.cart_id == Cart.id) \
+            .filter(CartItem.id == item_id, Cart.customer_id == customer_id) \
+            .first()
+        if not item:
+            return None
+        item.quantity = int(quantity)
+        db.session.commit()
+        return item
+
+    @staticmethod
+    def remove_item(item_id, customer_id):
+        """Remove a cart item that belongs to the customer's cart."""
+        item = CartItem.query.join(Cart, CartItem.cart_id == Cart.id) \
+            .filter(CartItem.id == item_id, Cart.customer_id == customer_id) \
+            .first()
+        if not item:
+            return False
+        db.session.delete(item)
+        db.session.commit()
+        return True
+
+    @staticmethod
+    def clear_cart(customer_id):
+        """Clear all items from the customer's cart."""
+        cart = Cart.query.filter_by(customer_id=customer_id).first()
+        if not cart:
+            return True
         for item in list(cart.items):
             db.session.delete(item)
+        # Reset restaurant binding after clearing
+        cart.restaurant_id = None
         db.session.commit()
         return True
 

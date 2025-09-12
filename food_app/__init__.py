@@ -17,14 +17,50 @@ def create_app(config_name='default'):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
     
+    # Cấu hình JWT
+    app.config['JWT_TOKEN_LOCATION'] = ['headers']
+    app.config['JWT_HEADER_NAME'] = 'Authorization'
+    app.config['JWT_HEADER_TYPE'] = 'Bearer'
+    app.config['JWT_IDENTITY_CLAIM'] = 'sub'
+    app.config['JWT_CLAIMS_IN_REFRESH_TOKEN'] = True
+    
     db.init_app(app)
-    CORS(app, origins=["*"], supports_credentials=True)
+    # CORS: allow FE origins explicitly; wildcard with credentials is blocked by browsers
+    allowed_origins = [
+        'https://www.konnn04.live',
+        'https://konnn04.live',
+        'http://localhost:5173',
+        'http://127.0.0.1:5173'
+    ]
+    CORS(
+        app,
+        resources={r"/api/*": {
+            "origins": allowed_origins,
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"],
+            "supports_credentials": True,
+            "expose_headers": ["Content-Type"]
+        }}
+    )
     jwt.init_app(app)
     login_manager.init_app(app)
-    login_manager.login_view = 'admin_auth.login'
+    # Admin login endpoint is AdminAuthView.default_view = 'index'
+    login_manager.login_view = 'admin_auth.index'
     flask_admin.init_app(app)
     swagger.init_app(app)
     
+    # Global JSON error handlers
+    from werkzeug.exceptions import HTTPException
+    from food_app.utils.responses import error_response
+
+    @app.errorhandler(HTTPException)
+    def handle_http_exception(e: HTTPException):
+        return error_response(e.description or 'HTTP Error', e.code or 500)
+
+    @app.errorhandler(Exception)
+    def handle_exception(e: Exception):
+        return error_response('Internal Server Error', 500)
+
     # Đăng ký blueprints
     from food_app.routes.auth import auth_bp
     from food_app.routes.search import search_bp
@@ -35,6 +71,7 @@ def create_app(config_name='default'):
     from food_app.routes.food import food_bp
     from food_app.routes.restaurant import restaurant_bp
     from food_app.routes.coupon import coupon_bp
+    from food_app.routes.payment import payment_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(search_bp, url_prefix='/api/search')
@@ -45,6 +82,7 @@ def create_app(config_name='default'):
     app.register_blueprint(food_bp, url_prefix='/api/food')
     app.register_blueprint(restaurant_bp, url_prefix='/api/restaurant')
     app.register_blueprint(coupon_bp, url_prefix='/api/coupon')
+    app.register_blueprint(payment_bp, url_prefix='/api/payment')
     
     from food_app.models.user import User
     @login_manager.user_loader

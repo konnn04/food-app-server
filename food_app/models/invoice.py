@@ -13,6 +13,7 @@ class Invoice(db.Model):
     tax = db.Column(db.Float, nullable=False, default=0.0)
     total = db.Column(db.Float, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     order = db.relationship('Order', backref='invoice')
 
@@ -27,6 +28,7 @@ class Invoice(db.Model):
             'tax': self.tax,
             'total': self.total,
             'created_at': self.created_at.isoformat() if self.created_at else None
+            , 'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
 
 

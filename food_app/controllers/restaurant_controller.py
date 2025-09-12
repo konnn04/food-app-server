@@ -1,7 +1,6 @@
 from food_app.dao import RestaurantDAO, UserDAO
 from food_app.utils.responses import success_response, error_response
 from flask_jwt_extended import get_jwt_identity
-from food_app.models.restaurant_staff import restaurant_staff
 from food_app import db
 from food_app.utils.pagination import paginate
 from food_app.models.restaurant import Restaurant
@@ -204,26 +203,7 @@ class RestaurantController:
             if not staff_user:
                 return error_response('Không tìm thấy user với username này', 404)
 
-            # Thêm vào bảng liên kết nếu chưa tồn tại
-            restaurant = current_user.owned_restaurant
-            link_exists = db.session.execute(
-                db.select(restaurant_staff)
-                .where(restaurant_staff.c.user_id == staff_user.id)
-                .where(restaurant_staff.c.restaurant_id == restaurant.id)
-            ).first()
-            if link_exists:
-                return error_response('Nhân viên đã thuộc nhà hàng này', 400)
-
-            db.session.execute(
-                restaurant_staff.insert().values(
-                    user_id=staff_user.id,
-                    restaurant_id=restaurant.id,
-                    role=role
-                )
-            )
-            db.session.commit()
-
-            return success_response('Thêm nhân viên thành công', staff_user.to_dict())
+            return error_response('Tính năng thêm nhân viên đã bị vô hiệu hoá (1 user - 1 nhà hàng)', 400)
 
         except Exception as e:
             db.session.rollback()
@@ -233,22 +213,7 @@ class RestaurantController:
     def remove_staff(user_id, current_user):
         """Owner/manager xóa nhân viên khỏi nhà hàng"""
         try:
-            if not current_user.can_invite_staff():
-                return error_response('Bạn không có quyền xóa nhân viên', 403)
-            if not current_user.owned_restaurant:
-                return error_response('Bạn chưa tạo nhà hàng', 404)
-
-            restaurant = current_user.owned_restaurant
-            deleted = db.session.execute(
-                restaurant_staff.delete()
-                .where(restaurant_staff.c.user_id == user_id)
-                .where(restaurant_staff.c.restaurant_id == restaurant.id)
-            )
-            if deleted.rowcount == 0:
-                db.session.rollback()
-                return error_response('Nhân viên không thuộc nhà hàng này', 404)
-            db.session.commit()
-            return success_response('Đã xóa nhân viên khỏi nhà hàng')
+            return error_response('Tính năng nhân viên đã bị vô hiệu hoá (1 user - 1 nhà hàng)', 400)
         except Exception as e:
             db.session.rollback()
             return error_response(f'Lỗi server: {str(e)}', 500)
@@ -262,19 +227,7 @@ class RestaurantController:
     def get_restaurant_staff(current_user):
         """Lấy danh sách staff/manager của restaurant"""
         try:
-            if current_user.role == 'owner':
-                restaurant = current_user.owned_restaurant
-            elif current_user.role in ['manager', 'staff']:
-                restaurant = current_user.restaurants[0] if current_user.restaurants else None
-            else:
-                return error_response('Không có quyền truy cập', 403)
-
-            if not restaurant:
-                return error_response('Không tìm thấy nhà hàng', 404)
-
-            staff_list = [user.to_dict() for user in restaurant.staff_users if user.role in ['staff', 'manager']]
-
-            return success_response('Lấy danh sách nhân viên thành công', staff_list)
+            return error_response('Tính năng danh sách nhân viên đã bị vô hiệu hoá', 400)
 
         except Exception as e:
             return error_response(f'Lỗi server: {str(e)}', 500)

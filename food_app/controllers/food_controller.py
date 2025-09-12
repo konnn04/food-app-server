@@ -18,6 +18,7 @@ class FoodController:
             lat = request.args.get('lat')
             lon = request.args.get('lon')
             max_km = request.args.get('max_km')
+            seed_random = request.args.get('seed_random', type=int)
             # Default to HCMC center if not provided
             if not lat or not lon:
                 lat = 10.754792
@@ -27,6 +28,13 @@ class FoodController:
             near = (lat, lon)
             query = FoodDAO.get_foods(category, available_only, keyword, near, float(max_km) if max_km else None)
             items, meta = paginate(query, page, per_page)
+
+            # Optional deterministic randomization by seed
+            if seed_random is not None:
+                import random
+                rng = random.Random(seed_random)
+                items = list(items)
+                rng.shuffle(items)
 
             # Compute distance (km) from provided/default location to restaurant location
             import math
