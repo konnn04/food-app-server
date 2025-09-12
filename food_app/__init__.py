@@ -30,7 +30,8 @@ def create_app(config_name='default'):
         'https://www.konnn04.live',
         'https://konnn04.live',
         'http://localhost:5173',
-        'http://127.0.0.1:5173'
+        'http://127.0.0.1:5173',
+        'https://food.riikonteam.io.vn'
     ]
     CORS(
         app,
