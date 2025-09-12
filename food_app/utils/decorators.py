@@ -1,6 +1,6 @@
 from functools import wraps
 from flask import request
-from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
+from flask_jwt_extended import verify_jwt_in_request, get_jwt
 from food_app.models.user import User
 from food_app.models.customer import Customer
 from food_app.utils.responses import error_response
@@ -12,7 +12,10 @@ def jwt_required(f):
     def decorated_function(*args, **kwargs):
         try:
             verify_jwt_in_request()
-            user_id = get_jwt_identity()
+            user_id = get_user_id_from_jwt() 
+            
+            if not user_id:
+                return error_response('Token không hợp lệ', 401)
             
             user = User.query.get(user_id)
             if not user:
@@ -31,8 +34,8 @@ def jwt_customer_required(f):
     def decorated_function(*args, **kwargs):
         try:
             verify_jwt_in_request()
-            user_type = get_user_type_from_jwt()
             user_id = get_user_id_from_jwt()
+            user_type = get_user_type_from_jwt()
             
             if not user_type or user_type != 'customer':
                 return error_response('Không có quyền truy cập', 403)
@@ -43,6 +46,28 @@ def jwt_customer_required(f):
             
             # Thêm customer vào kwargs
             kwargs['current_customer'] = customer
+            return f(*args, **kwargs)
+        except Exception as e:
+            return error_response(f'Lỗi xác thực: {str(e)}', 401)
+    return decorated_function
+
+def jwt_base_user_required(f):
+    """Decorator trả về BaseUser (Customer hoặc User) trong kwargs['current_base_user']"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        try:
+            verify_jwt_in_request()
+            user_id = get_user_id_from_jwt()
+            user_type = get_user_type_from_jwt()
+            if not user_id:
+                return error_response('Chưa đăng nhập', 401)
+            if user_type == 'customer':
+                base_user = Customer.query.get(user_id)
+            else:
+                base_user = User.query.get(user_id)
+            if not base_user:
+                return error_response('Người dùng không tồn tại', 404)
+            kwargs['current_base_user'] = base_user
             return f(*args, **kwargs)
         except Exception as e:
             return error_response(f'Lỗi xác thực: {str(e)}', 401)
@@ -71,6 +96,10 @@ def jwt_staff_required(require_restaurant=False, add_user_to_kwargs=True):
                 if not user:
                     return error_response('Người dùng không tồn tại', 404)
                 
+                # Chỉ cho phép owner hoặc admin sử dụng các endpoint dạng staff
+                if user.role not in ['owner', 'admin']:
+                    return error_response('Chỉ chủ quán hoặc admin được phép truy cập', 403)
+
                 # Kiểm tra restaurant_id nếu yêu cầu
                 if require_restaurant and not user.restaurant_id:
                     return error_response('Không có quyền truy cập - Yêu cầu liên kết với nhà hàng', 403)
@@ -145,19 +174,23 @@ def require_role(required_role):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            user_id = request.headers.get('X-User-ID')
-            
-            if not user_id:
-                return error_response('Chưa đăng nhập', 401)
-            
-            user = User.query.get(user_id)
-            if not user:
-                return error_response('Người dùng không tồn tại', 401)
-            
-            if not user.has_role(required_role):
-                return error_response('Không có quyền truy cập', 403)
-            
-            return f(*args, **kwargs)
+            try:
+                verify_jwt_in_request()
+                user_id = get_user_id_from_jwt()
+                
+                if not user_id:
+                    return error_response('Chưa đăng nhập', 401)
+                
+                user = User.query.get(user_id)
+                if not user:
+                    return error_response('Người dùng không tồn tại', 401)
+                
+                if not user.has_role(required_role):
+                    return error_response('Không có quyền truy cập', 403)
+                
+                return f(*args, **kwargs)
+            except Exception as e:
+                return error_response(f'Lỗi xác thực: {str(e)}', 401)
         return decorated_function
     return decorator
 

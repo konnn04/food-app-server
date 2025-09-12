@@ -15,6 +15,7 @@ class Order(db.Model):
     cancel_reason = db.Column(db.Text, nullable=True)
     rejection_reason = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     accepted_at = db.Column(db.DateTime, nullable=True)
     completed_at = db.Column(db.DateTime, nullable=True)
     cancelled_at = db.Column(db.DateTime, nullable=True)
@@ -30,7 +31,7 @@ class Order(db.Model):
         return {
             'id': self.id,
             'customer_id': self.customer_id,
-            'customer_name': self.customer.full_name if self.customer else None,
+            'customer_name': (self.customer.first_name + ' ' + self.customer.last_name) if self.customer else None,
             'customer_phone': self.customer.phone if self.customer else None,
             'restaurant_id': self.restaurant_id,
             'restaurant_name': self.restaurant.name if self.restaurant else None,
@@ -42,6 +43,7 @@ class Order(db.Model):
             'cancel_reason': self.cancel_reason,
             'rejection_reason': self.rejection_reason,
             'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'accepted_at': self.accepted_at.isoformat() if self.accepted_at else None,
             'completed_at': self.completed_at.isoformat() if self.completed_at else None,
             'cancelled_at': self.cancelled_at.isoformat() if self.cancelled_at else None,

@@ -14,6 +14,7 @@ class Restaurant(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     opening_hours = db.Column(db.JSON)  
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     # Geo coordinates
     latitude = db.Column(db.Float, nullable=True)
     longitude = db.Column(db.Float, nullable=True)
@@ -27,9 +28,7 @@ class Restaurant(db.Model):
     rejection_reason = db.Column(db.Text, nullable=True)
     
     # Relationships
-    owner = db.relationship('User', foreign_keys=[owner_id], back_populates='owned_restaurant') 
-    from .restaurant_staff import restaurant_staff
-    staff_users = db.relationship('User', secondary=restaurant_staff, back_populates='restaurants')  
+    owner = db.relationship('User', foreign_keys=[owner_id], back_populates='owned_restaurant')
     foods = db.relationship('Food', back_populates='restaurant', lazy=True)
     orders = db.relationship('Order', back_populates='restaurant', lazy=True)
 
@@ -47,7 +46,8 @@ class Restaurant(db.Model):
             'opening_hours': self.opening_hours,
             'latitude': self.latitude,
             'longitude': self.longitude,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
         
         if include_sensitive:

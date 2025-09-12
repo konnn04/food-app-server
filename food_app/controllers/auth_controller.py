@@ -139,6 +139,9 @@ class AuthController:
         """Làm mới access token bằng refresh token"""
         try:
             from flask_jwt_extended import create_access_token
+            # Đảm bảo identity là string
+            if not isinstance(identity, (str, int)):
+                identity = str(identity)
             access_token = create_access_token(identity=identity)
 
             return success_response('Làm mới token thành công', {

@@ -50,6 +50,13 @@ class Config:
     MIN_RATING = 1
     MAX_RATING = 5
 
+    # VNPay Settings
+    VNPAY_TMN_CODE = os.getenv('VNPAY_TMN_CODE', '')
+    VNPAY_HASH_SECRET = os.getenv('VNPAY_HASH_SECRET', '')
+    VNPAY_PAYMENT_URL = os.getenv('VNPAY_PAYMENT_URL', 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html')
+    VNPAY_RETURN_URL = os.getenv('VNPAY_RETURN_URL', 'http://localhost:5000/api/payment/vnpay/return/')
+    VNPAY_IPN_URL = os.getenv('VNPAY_IPN_URL', 'http://localhost:5000/api/payment/vnpay/ipn/')
+
 class DevelopmentConfig(Config):
     DEBUG = True
 

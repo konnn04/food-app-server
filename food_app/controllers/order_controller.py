@@ -137,9 +137,13 @@ class OrderController:
             if staff.role not in ['staff', 'manager']:
                 return error_response('Người dùng không phải là nhân viên', 400)
 
-            # Kiểm tra staff thuộc nhà hàng của order (multi-restaurant)
-            if not any(r.id == order.restaurant_id for r in staff.restaurants):
-                return error_response('Nhân viên không thuộc nhà hàng này', 400)
+            # Kiểm tra staff thuộc nhà hàng của order (1 user - 1 restaurant or owner)
+            if staff.role in ['staff', 'manager']:
+                if staff.restaurant_id != order.restaurant_id:
+                    return error_response('Nhân viên không thuộc nhà hàng này', 400)
+            elif staff.role == 'owner':
+                if not (staff.owned_restaurant and staff.owned_restaurant.id == order.restaurant_id):
+                    return error_response('Chủ quán không sở hữu nhà hàng này', 400)
 
             OrderDAO.update_order_status(order, {'assigned_staff_id': staff_id})
 

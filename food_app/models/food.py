@@ -12,6 +12,7 @@ class Food(db.Model):
     available = db.Column(db.Boolean, default=True)
     restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurants.id'), nullable=False)  # THÊM
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
     restaurant = db.relationship('Restaurant', back_populates='foods')
@@ -51,5 +52,6 @@ class Food(db.Model):
             'available': self.available,
             'restaurant_id': self.restaurant_id,
             'restaurant': restaurant_info,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }

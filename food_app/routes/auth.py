@@ -2,8 +2,8 @@ from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from food_app.controllers.auth_controller import AuthController
 from food_app.dao import UserDAO, CustomerDAO
-from food_app.utils.decorators import require_role
 from flasgger import swag_from
+from food_app.utils.jwt_service import get_user_id_from_jwt, get_user_type_from_jwt
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -69,9 +69,8 @@ def create_owner():
 @auth_bp.route('/profile/', methods=['GET'])
 @jwt_required()
 def get_profile():
-    identity = get_jwt_identity()
-    user_type = identity.get('user_type')
-    user_id = identity.get('user_id')
+    user_id = get_user_id_from_jwt()
+    user_type = get_user_type_from_jwt()
 
     if user_type == 'customer':
         user = CustomerDAO.get_customer_by_id(user_id)
@@ -83,9 +82,8 @@ def get_profile():
 @auth_bp.route('/profile/', methods=['PUT'])
 @jwt_required()
 def update_profile():
-    identity = get_jwt_identity()
-    user_type = identity.get('user_type')
-    user_id = identity.get('user_id')
+    user_id = get_user_id_from_jwt()
+    user_type = get_user_type_from_jwt()
     data = request.get_json()
 
     if user_type == 'customer':

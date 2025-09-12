@@ -21,21 +21,15 @@ class CartController:
     @staticmethod
     def get_cart(customer_id):
         try:
-            cart = CartDAO.get_or_create_cart(customer_id)
-            return success_response('Lấy giỏ hàng thành công', {
-                'id': cart.id,
-                'customer_id': cart.customer_id,
-                'restaurant_id': cart.restaurant_id,
-                'items': [i.to_dict() for i in cart.items]
-            })
+            cart_data = CartDAO.get_cart_with_items_and_data(customer_id)
+            return success_response('Lấy giỏ hàng thành công', cart_data)
         except Exception as e:
             return error_response(f'Lỗi server: {str(e)}', 500)
 
     @staticmethod
     def clear_cart(customer_id):
         try:
-            cart = CartDAO.get_or_create_cart(customer_id)
-            CartDAO.clear_cart(cart)
+            CartDAO.clear_cart(customer_id)
             return success_response('Đã xóa giỏ hàng')
         except Exception as e:
             return error_response(f'Lỗi server: {str(e)}', 500)

@@ -13,7 +13,8 @@ food_bp = Blueprint('food', __name__)
     {'in': 'query', 'name': 'per_page', 'schema': {'type': 'integer'}},
     {'in': 'query', 'name': 'lat', 'schema': {'type': 'number', 'format': 'float'}, 'description': 'Default 10.754792'},
     {'in': 'query', 'name': 'lon', 'schema': {'type': 'number', 'format': 'float'}, 'description': 'Default 106.6952276'},
-    {'in': 'query', 'name': 'max_km', 'schema': {'type': 'number', 'format': 'float'}}
+    {'in': 'query', 'name': 'max_km', 'schema': {'type': 'number', 'format': 'float'}},
+    {'in': 'query', 'name': 'seed_random', 'schema': {'type': 'integer'}, 'description': 'Deterministic random seed for shuffling results'}
 ], 'responses': {
     '200': {
         'description': 'Success',

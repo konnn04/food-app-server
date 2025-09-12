@@ -1,6 +1,4 @@
 from flask import Blueprint, request
-from flask_jwt_extended import get_jwt_identity
-from food_app.utils.decorators import jwt_staff_required
 from flasgger import swag_from
 
 from food_app.controllers import RestaurantController

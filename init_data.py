@@ -25,11 +25,9 @@ def load_food_data():
     return food_data, categories_data
 
 def create_sample_data():
-app = create_app()
+    app = create_app()
 
     with app.app_context():
-        # Drop and recreate all tables
-        # db.drop_all()
         db.create_all()
         
         # Load food and categories data
@@ -75,11 +73,7 @@ app = create_app()
                 "role": "owner"
             })
         
-        # Create staff
-        user_data.extend([
-            {"username": "staff1", "email": "staff1@foodapp.com", "password": "staff123", "role": "staff"},
-            {"username": "staff2", "email": "staff2@foodapp.com", "password": "staff123", "role": "staff"},
-        ])
+        # No extra staff accounts in owner-only model
         
         for user_info in user_data:
             user = User(
@@ -210,7 +204,7 @@ app = create_app()
                 ]),
                 is_active=True,
                 opening_hours="07:00-22:00",
-                owner=users[i+1], 
+                owner_id=users[i+1].id,  # i+1 because users[0] is admin 
                 latitude=lat,
                 longitude=lon,
                 tax_code=f"0123456789{i:03d}",
@@ -220,6 +214,10 @@ app = create_app()
             db.session.add(restaurant)
             restaurants.append(restaurant)
             
+            # Update owner's restaurant_id
+            owner = users[i+1]
+            owner.restaurant_id = restaurant.id
+            db.session.add(owner)
             db.session.commit()
         
         print("Creating foods...")
@@ -292,6 +290,13 @@ app = create_app()
                             if topping_name in all_toppings:
                                 food.toppings.append(all_toppings[topping_name])
         
+        # Ensure owners have restaurant_id set (1-1 owner)
+        for idx, restaurant in enumerate(restaurants):
+            owner_user = users[idx+1]  # users[0] is admin; then owners in order
+            owner_user.restaurant_id = restaurant.id
+            db.session.add(owner_user)
+        db.session.commit()
+
         print("Creating coupons...")
         coupons = []
         for i in range(10):
@@ -310,7 +315,74 @@ app = create_app()
             db.session.add(coupon)
             coupons.append(coupon)
         
-        # Skip creating orders, invoices, reviews, and carts as requested
+        print("Creating reviews...")
+        reviews = []
+        review_contents = [
+            "Món ăn rất ngon, sẽ quay lại lần sau!",
+            "Chất lượng tuyệt vời, đáng đồng tiền bát gạo.",
+            "Món ăn ngon, nhưng phục vụ hơi chậm.",
+            "Đồ ăn tươi và ngon, giá cả hợp lý.",
+            "Hương vị đặc trưng, rất đáng để thử.",
+            "Phần ăn hơi nhỏ so với giá tiền.",
+            "Đồ ăn ngon, nhân viên thân thiện.",
+            "Hương vị đúng chuẩn, sẽ ghé lại.",
+            "Chất lượng ổn, giá hơi cao.",
+            "Rất ngon, đúng với mô tả.",
+            "Đồ ăn tươi ngon, không gian thoải mái."
+        ]
+
+        # Chọn số lượng đánh giá muốn tạo
+        num_reviews = 500  # Ví dụ: tạo 500 đánh giá
+
+        # Tạo đánh giá ngẫu nhiên
+        for _ in range(num_reviews):
+            customer = random.choice(customers)
+            food = random.choice(foods)
+            rating = random.randint(3, 5)  # Đánh giá từ 3-5 sao
+            content = random.choice(review_contents)
+            
+            # Ngày đánh giá trong khoảng 3 tháng gần đây
+            review_date = datetime.now() - timedelta(days=random.randint(0, 90))
+            
+            review = Review(
+                customer_id=customer.id,
+                food_id=food.id,
+                restaurant_id=food.restaurant_id,
+                rating=rating,
+                comment=content,
+                created_at=review_date
+            )
+            db.session.add(review)
+            reviews.append(review)
+
+        # Tạo một số đánh giá chi tiết hơn cho các món nổi bật
+        detailed_reviews = [
+            "Món này là đặc sản của quán, tôi rất thích hương vị đặc trưng và cách chế biến. Nguyên liệu tươi ngon, nước sốt vừa miệng. Nhân viên phục vụ nhiệt tình, không gian quán đẹp và sạch sẽ. Mình sẽ quay lại nhiều lần nữa!",
+            "Đây là lần thứ 3 mình đặt món này và chất lượng luôn ổn định. Hương vị đậm đà, đúng chuẩn. Điểm cộng cho phần thức ăn được trình bày đẹp mắt. Giá cả hợp lý so với chất lượng.",
+            "Mình là khách quen của quán và đặc biệt thích món này. Vị umami đặc trưng, nguyên liệu tươi ngon. Nhân viên phục vụ nhanh nhẹn và thân thiện. Không gian quán thoáng đãng, sạch sẽ.",
+            "Món này có hương vị độc đáo mà không nơi nào có được. Nguyên liệu chọn lọc kỹ càng, chế biến vừa miệng. Phần ăn hơi nhỏ nhưng xứng đáng với giá tiền. Sẽ quay lại!",
+            "Đây là món ăn yêu thích của gia đình mình. Trẻ con rất thích và người lớn cũng vậy. Món ăn được chế biến cẩn thận, vị ngon đúng điệu. Nhà hàng sạch sẽ, nhân viên thân thiện."
+        ]
+
+        # Tạo 50 đánh giá chi tiết cho các món ăn ngẫu nhiên với rating 5 sao
+        for _ in range(50):
+            customer = random.choice(customers)
+            food = random.choice(foods)
+            content = random.choice(detailed_reviews)
+            
+            # Đánh giá chi tiết thường là 5 sao
+            review = Review(
+                customer_id=customer.id,
+                food_id=food.id,
+                restaurant_id=food.restaurant_id,
+                rating=5,
+                comment=content,
+                created_at=datetime.now() - timedelta(days=random.randint(0, 30))
+            )
+            db.session.add(review)
+            reviews.append(review)
+
+        print(f"Created {len(reviews)} reviews!")
 
         db.session.commit()
         print("Sample data created successfully!")
