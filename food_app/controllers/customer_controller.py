@@ -400,6 +400,33 @@ class CustomerController:
             return error_response(f"Lỗi lấy đánh giá: {str(e)}")
 
     @staticmethod
+    def get_reviews_by_food(food_id):
+        """Lấy đánh giá của món ăn"""
+        try:
+            page = request.args.get('page', type=int)
+            per_page = request.args.get('per_page', type=int)
+            
+            query = Review.query
+            if food_id:
+                query = query.filter_by(food_id=food_id)
+            
+            query = query.order_by(Review.created_at.desc())
+            reviews, pagination_info = paginate(query, page, per_page)
+            
+            reviews_data = [review.to_dict() for review in reviews]
+            
+            return success_response(
+                message="Lấy đánh giá thành công",
+                data={
+                    'items': reviews_data,
+                    'pagination': pagination_info
+                }
+            )
+            
+        except Exception as e:
+            return error_response(f"Lỗi lấy đánh giá: {str(e)}")
+
+    @staticmethod
     def create_review(data, current_customer):
         """Tạo đánh giá mới cho món ăn"""
         try:
@@ -497,3 +524,44 @@ class CustomerController:
             
         except Exception as e:
             return error_response(f"Lỗi rút tiền: {str(e)}")
+
+    def get_restaurants(nearby=False, page=1, per_page=10):
+        """Lấy danh sách nhà hàng gần nhất"""
+        try:
+            query = FoodDAO.get_active_restaurants_query()
+            
+            if nearby:
+                # Giả sử có hàm sắp xếp theo khoảng cách trong DAO
+                query = FoodDAO.order_by_nearby(query)
+            else:
+                query = query.order_by(FoodDAO.restaurant_model.name.asc())
+            
+            restaurants, pagination_info = paginate(query, page, per_page)
+            restaurants_data = [restaurant.to_dict() for restaurant in restaurants]
+            
+            return success_response(
+                message="Lấy danh sách nhà hàng thành công",
+                data={
+                    'items': restaurants_data,
+                    'pagination': pagination_info
+                }
+            )
+            
+        except Exception as e:
+            return error_response(f"Lỗi lấy nhà hàng: {str(e)}")
+
+    @staticmethod
+    def get_random_restaurants(per_page=None):
+        """Lấy danh sách nhà hàng ngẫu nhiên"""
+        try:
+            restaurants = FoodDAO.get_random_restaurants(limit=per_page)
+            restaurants_data = [restaurant.to_dict() for restaurant in restaurants]
+            
+            return success_response(
+                message="Lấy danh sách nhà hàng ngẫu nhiên thành công",
+                data={
+                    'items': restaurants_data
+                }
+            )
+        except Exception as e:
+            return error_response(f"Lỗi lấy nhà hàng ngẫu nhiên: {str(e)}")

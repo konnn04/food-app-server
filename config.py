@@ -18,6 +18,13 @@ class Config:
     JWT_HEADER_NAME = 'Authorization'
     JWT_HEADER_TYPE = 'Bearer'
     
+    # Email Configuration
+    SMTP_SERVER = os.environ.get('SMTP_SERVER') or 'smtp.gmail.com'
+    SMTP_PORT = os.environ.get('SMTP_PORT') or 587
+    SMTP_USERNAME = os.environ.get('SMTP_USERNAME') or 'your-email@gmail.com'
+    SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD') or 'your-app-password'
+    FROM_EMAIL = os.environ.get('FROM_EMAIL') or 'Food App <no-reply@foodapp.com>'
+    
     # Flask Admin
     FLASK_ADMIN_SWATCH = 'cerulean'
     

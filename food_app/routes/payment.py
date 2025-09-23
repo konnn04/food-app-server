@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, current_app
 from flasgger import swag_from
 from food_app.utils.decorators import jwt_customer_required, jwt_required, jwt_base_user_required
 from food_app.utils.responses import success_response, error_response
@@ -63,6 +63,20 @@ def vnpay_return():
                         txn.status = 'success'
                         db.session.commit()
                         data['credited_by_return'] = True
+                        
+                        # Kiểm tra xem có phải thanh toán đơn hàng không
+                        if txn.raw_request and isinstance(txn.raw_request, dict) and txn.raw_request.get('type') == 'order_payment':
+                            order_id = txn.raw_request.get('order_id')
+                            if order_id:
+                                from food_app.models.order import Order
+                                order = Order.query.get(order_id)
+                                if order:
+                                    # Send payment confirmation email
+                                    from food_app.utils.mail import EmailService
+                                    from food_app.models.customer import Customer
+                                    customer = Customer.query.get(order.customer_id)
+                                    if customer and customer.email:
+                                        EmailService.send_payment_confirmation(order, customer.email)
         return success_response('Kết quả thanh toán', data)
     except Exception as e:
         return error_response(f'Lỗi xử lý return: {str(e)}', 500)
@@ -101,6 +115,24 @@ def vnpay_ipn():
             base_user.balance = (base_user.balance or 0) + txn.amount
             txn.status = 'success'
             db.session.commit()
+            
+            # Kiểm tra xem có phải thanh toán đơn hàng không
+            if txn.raw_request and isinstance(txn.raw_request, dict) and txn.raw_request.get('type') == 'order_payment':
+                order_id = txn.raw_request.get('order_id')
+                if order_id:
+                    from food_app.models.order import Order
+                    order = Order.query.get(order_id)
+                    if order:
+                        # Send payment confirmation email
+                        from food_app.utils.mail import EmailService
+                        from food_app.models.customer import Customer
+                        customer = Customer.query.get(order.customer_id)
+                        if customer and customer.email:
+                            current_app.logger.info(f"Sending payment confirmation email to customer: {customer.email}")
+                            result = EmailService.send_payment_confirmation(order, customer.email)
+                            current_app.logger.info(f"Email sending result: {result}")
+                        else:
+                            current_app.logger.warning(f"Cannot send payment email - missing email address for customer ID {order.customer_id}")
             return ({'RspCode': '00', 'Message': 'Confirm Success'}), 200
         else:
             txn.status = 'failed'
@@ -141,6 +173,16 @@ def pay_order(current_customer):
             # Mark order as paid
             order.status = 'paid'
             db.session.commit()
+            
+            # Send payment confirmation email
+            from food_app.utils.mail import EmailService
+            if current_customer.email:
+                current_app.logger.info(f"Sending wallet payment confirmation email to customer: {current_customer.email}")
+                result = EmailService.send_payment_confirmation(order, current_customer.email)
+                current_app.logger.info(f"Email sending result: {result}")
+            else:
+                current_app.logger.warning("Cannot send wallet payment email - missing email address for current customer")
+                
             return success_response('Thanh toán bằng số dư thành công', {'paid_by_wallet': amount_due, 'order_status': order.status})
         else:
             # Deduct what we can? Business says if không đủ -> tạo VNPay mới, không trừ phần thiếu

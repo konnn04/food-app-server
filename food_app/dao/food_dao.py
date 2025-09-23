@@ -58,3 +58,18 @@ class FoodDAO:
             food.toppings = Topping.query.filter(Topping.id.in_(toppings)).all()
         db.session.commit()
         return food
+
+    @staticmethod
+    @staticmethod
+    def get_random_restaurants(limit=None):
+        """Lấy danh sách nhà hàng ngẫu nhiên"""
+        from sqlalchemy.sql.expression import func
+        
+        query = Restaurant.query.filter(Restaurant.is_active == True)
+        
+        query = query.order_by(func.random())
+        
+        if limit is not None:
+            query = query.limit(limit)
+        
+        return query.all()

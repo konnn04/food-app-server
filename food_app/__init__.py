@@ -73,6 +73,8 @@ def create_app(config_name='default'):
     from food_app.routes.restaurant import restaurant_bp
     from food_app.routes.coupon import coupon_bp
     from food_app.routes.payment import payment_bp
+    from food_app.routes.order import order_bp
+    from food_app.routes.test import test_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(search_bp, url_prefix='/api/search')
@@ -84,6 +86,8 @@ def create_app(config_name='default'):
     app.register_blueprint(restaurant_bp, url_prefix='/api/restaurant')
     app.register_blueprint(coupon_bp, url_prefix='/api/coupon')
     app.register_blueprint(payment_bp, url_prefix='/api/payment')
+    app.register_blueprint(order_bp, url_prefix='/api/order')
+    app.register_blueprint(test_bp, url_prefix='/api/test')
     
     from food_app.models.user import User
     @login_manager.user_loader

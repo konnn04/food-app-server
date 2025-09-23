@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Thông báo đơn hàng hoàn thành</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .container {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f58220;
+            margin-bottom: 20px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #f58220;
+        }
+        .order-info {
+            margin-bottom: 20px;
+        }
+        .order-complete {
+            color: #28a745;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f5f5f5;
+        }
+        .total {
+            font-weight: bold;
+            text-align: right;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 12px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">Food App</div>
+            <p>Thông báo đơn hàng hoàn thành</p>
+        </div>
+        
+        <div class="order-info">
+            <p>Kính gửi <strong>Quản lý {{ restaurant_name }}</strong>,</p>
+            <p class="order-complete">Đơn hàng #{{ order_id }} đã được giao thành công đến khách hàng.</p>
+            <p><strong>Mã đơn hàng:</strong> #{{ order_id }}</p>
+            <p><strong>Ngày đặt hàng:</strong> {{ order_date }}</p>
+            <p><strong>Thời gian hoàn thành:</strong> {{ completed_date }}</p>
+            <p><strong>Khách hàng:</strong> {{ customer_name }}</p>
+        </div>
+        
+        <h3>Chi tiết đơn hàng:</h3>
+        <table>
+            <tr>
+                <th>Món ăn</th>
+                <th>Số lượng</th>
+                <th>Đơn giá</th>
+                <th>Thành tiền</th>
+            </tr>
+            {% for item in order_items %}
+            <tr>
+                <td>{{ item.food.name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.unit_price }} đ</td>
+                <td>{{ item.unit_price * item.quantity }} đ</td>
+            </tr>
+            {% endfor %}
+        </table>
+        
+        <div class="total">
+            <p>Tổng thanh toán: {{ total_amount }} đ</p>
+        </div>
+        
+        <p>Cảm ơn bạn đã hợp tác với Food App. Khoản thanh toán cho đơn hàng này sẽ được chuyển vào tài khoản của bạn theo kỳ thanh toán đã thỏa thuận.</p>
+        <p>Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ với đội hỗ trợ của chúng tôi qua email partner@foodapp.com hoặc gọi số 1900-5678.</p>
+        
+        <div class="footer">
+            <p>Đây là email tự động, vui lòng không trả lời email này.</p>
+            <p>&copy; 2025 Food App. Đã đăng ký bản quyền.</p>
+        </div>
+    </div>
+</body>
+</html>

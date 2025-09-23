@@ -90,12 +90,27 @@ def cancel_order(order_id, current_customer):
     return CustomerController.cancel_order(order_id, data, current_customer)
 
 # Review endpoints
-@customer_bp.route('/reviews/', methods=['GET'])
-@swag_from({'tags': ['Customer'], 'summary': 'Get restaurant reviews'})
-def get_reviews():  
-    """Lấy đánh giá của nhà hàng"""
-    restaurant_id = request.args.get('restaurant_id', type=int)
-    return CustomerController.get_reviews(restaurant_id)
+@customer_bp.route('/reviews/<int:food_id>/', methods=['GET'])
+@swag_from({'tags': ['Customer'], 'summary': 'Get food reviews'})
+def get_reviews(food_id):  
+    """Lấy đánh giá của món ăn"""
+    return CustomerController.get_reviews_by_food(food_id)
+
+@customer_bp.route('/restaurant/', methods=['GET'])
+@swag_from({'tags': ['Customer'], 'summary': 'Get nearby restaurants'})
+def get_restaurants():  
+    """Lấy danh sách nhà hàng gần nhất"""
+    nearby = request.args.get('nearby', 'false').lower() == 'true'
+    per_page = request.args.get('per_page', type=int)
+    page = request.args.get('page', 1, type=int)
+    return CustomerController.get_restaurants(nearby=nearby, page=page, per_page=per_page)
+
+@customer_bp.route('/restaurant/random/', methods=['GET'])
+@swag_from({'tags': ['Customer'], 'summary': 'Get random restaurants'})
+def get_random_restaurants():
+    """Lấy danh sách nhà hàng ngẫu nhiên"""
+    per_page = request.args.get('per_page', type=int)
+    return CustomerController.get_random_restaurants(per_page=per_page)
 
 @customer_bp.route('/reviews/', methods=['POST'])
 @jwt_customer_required
