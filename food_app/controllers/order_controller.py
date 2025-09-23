@@ -1,5 +1,7 @@
+from flask import current_app
 from food_app.dao import OrderDAO, CustomerDAO
 from food_app.utils.responses import success_response, error_response
+from food_app.utils.mail import EmailService
 
 class OrderController:
     @staticmethod
@@ -41,6 +43,14 @@ class OrderController:
                 'total_orders': customer.total_orders + 1,
                 'loyalty_points': customer.loyalty_points + int(order.total_amount / 1000)  # 1 điểm per 1000 VND
             })
+            
+            # Gửi email xác nhận đơn hàng
+            if customer.email:
+                current_app.logger.info(f"Sending order confirmation email to customer: {customer.email}")
+                result = EmailService.send_order_confirmation(order, customer.email)
+                current_app.logger.info(f"Email sending result: {result}")
+            else:
+                current_app.logger.warning(f"Cannot send order confirmation email - missing email address for customer ID {customer.id}")
 
             return success_response('Đặt hàng thành công', order.to_dict(), 201)
 
@@ -86,7 +96,34 @@ class OrderController:
             if not order:
                 return error_response('Không tìm thấy đơn hàng', 404)
 
-            updated_order = OrderDAO.update_order_status(order, new_status)
+            # Set completed_at if status is delivered
+            update_data = {'status': new_status}
+            if new_status == 'delivered':
+                from datetime import datetime
+                update_data['completed_at'] = datetime.utcnow()
+                
+            updated_order = OrderDAO.update_order_status(order, update_data)
+            
+            # Gửi email khi đơn hàng hoàn thành
+            if new_status == 'delivered':
+                # Gửi email cho khách hàng
+                customer = CustomerDAO.get_customer_by_id(order.customer_id)
+                if customer and customer.email:
+                    current_app.logger.info(f"Sending order completion email to customer: {customer.email}")
+                    result = EmailService.send_order_completion(updated_order, customer.email)
+                    current_app.logger.info(f"Email sending result: {result}")
+                else:
+                    current_app.logger.warning(f"Cannot send customer email - missing email address for customer ID {order.customer_id}")
+                
+                # Gửi email cho nhà hàng
+                from food_app.dao import RestaurantDAO
+                restaurant = RestaurantDAO.get_restaurant_by_id(order.restaurant_id)
+                if restaurant and restaurant.email:
+                    current_app.logger.info(f"Sending order completion email to restaurant: {restaurant.email}")
+                    result = EmailService.send_restaurant_order_completion(updated_order, restaurant.email)
+                    current_app.logger.info(f"Email sending result: {result}")
+                else:
+                    current_app.logger.warning(f"Cannot send restaurant email - missing email address for restaurant ID {order.restaurant_id}")
 
             return success_response('Cập nhật trạng thái thành công', updated_order.to_dict())
 

@@ -82,7 +82,11 @@ class OrderDAO:
 
     @staticmethod
     def update_order_status(order, new_status):
-        order.status = new_status
+        if isinstance(new_status, dict):
+            for key, value in new_status.items():
+                setattr(order, key, value)
+        else:
+            order.status = new_status
         db.session.commit()
         return order
 
